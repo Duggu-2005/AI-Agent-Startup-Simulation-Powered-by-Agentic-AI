@@ -1,169 +1,369 @@
 {% extends "nav.html" %}
 {% load static %}
+{% block title %}Start a Simulation — VyavasAI{% endblock %}
+
 {% block content %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Startup Details</title>
+<style>
+  .form-page {
+    max-width: var(--maxw);
+    margin: 0 auto;
+    padding: clamp(3rem, 7vw, 6rem) clamp(1.25rem, 4vw, 3rem) clamp(4rem, 8vw, 7rem);
+    display: grid;
+    grid-template-columns: 1.25fr 0.75fr;
+    gap: clamp(2rem, 5vw, 5rem);
+    align-items: start;
+  }
 
-  <style>
-    :root {
-      --bg-dark: #0b0c14;
-      --card-bg: #14162a;
-      --purple: #a855f7;
-      --pink: #ec4899;
-      --text-muted: #a1a1aa;
-      --white: #ffffff;
-      --border-soft: rgba(255,255,255,0.08);
-    }
+  .form-card {
+    border: 1px solid var(--line);
+    border-radius: 26px;
+    background: linear-gradient(180deg, var(--surface-2), var(--surface));
+    box-shadow: var(--shadow-big);
+    padding: clamp(1.8rem, 4vw, 3rem);
+    position: relative;
+  }
+  .form-card::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--amber), var(--gold-2));
+    border-radius: 26px 26px 0 0;
+  }
 
-    * { box-sizing: border-box; }
+  .progress-dots { display: flex; gap: 0.5rem; margin-top: 2.4rem; margin-bottom: 2.4rem; }
+  .progress-dots i { flex: 1; height: 3px; border-radius: 99px; background: var(--line-2); transition: background 0.45s; }
+  .progress-dots i.on { background: linear-gradient(90deg, var(--amber), var(--gold-2)); }
 
-    body {
-      margin: 0;
-      background: var(--bg-dark);
-      color: var(--white);
-      font-family: Inter, system-ui, sans-serif;
-    }
+  .panel { display: none; }
+  .panel.active { display: block; animation: panelIn 0.6s var(--ease); }
+  @keyframes panelIn { from { opacity: 0; transform: translateY(22px); } to { opacity: 1; transform: none; } }
 
-    .container {
-      max-width: 760px;
-      margin: 60px auto;
-      background: var(--card-bg);
-      padding: 40px;
-      border-radius: 20px;
-      border: 1px solid var(--border-soft);
-    }
+  .panel .kicker { margin-bottom: 1rem; }
+  .panel h1 { font-size: clamp(1.5rem, 3.2vw, 2.1rem); margin-bottom: 0.7rem; }
+  .panel .hint { color: var(--muted); font-size: 0.94rem; margin-bottom: 2.2rem; line-height: 1.6; }
 
-    h1 {
-      font-size: 32px;
-      margin-bottom: 10px;
-      color: var(--purple);
-    }
+  .field { margin-bottom: 1.6rem; }
+  .field label {
+    display: block;
+    font-family: var(--display);
+    font-size: 0.86rem;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    margin-bottom: 0.6rem;
+    color: var(--text);
+  }
+  .field input, .field textarea, .field select {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--line-2);
+    border-radius: 14px;
+    color: var(--text);
+    padding: 0.95rem 1.1rem;
+    font-family: var(--body);
+    font-size: 0.97rem;
+    outline: none;
+    transition: border-color 0.25s, box-shadow 0.25s, background 0.25s;
+  }
+  .field textarea { resize: none; min-height: 104px; }
+  .field input::placeholder, .field textarea::placeholder { color: var(--dim); }
+  .field input:focus, .field textarea:focus, .field select:focus {
+    border-color: var(--gold);
+    background: rgba(255, 255, 255, 0.05);
+    box-shadow: 0 0 0 4px rgba(217, 169, 78, 0.14);
+  }
+  .field select {
+    appearance: none;
+    cursor: pointer;
+    background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%),
+      linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+    background-position: calc(100% - 20px) 50%, calc(100% - 14px) 50%;
+    background-size: 6px 6px;
+    background-repeat: no-repeat;
+  }
+  .field select option { background: var(--surface-2); color: var(--text); }
 
-    p.subtitle {
-      color: var(--text-muted);
-      margin-bottom: 30px;
-      font-size: 16px;
-    }
+  .chips { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+  .chip {
+    border: 1px solid var(--line-2);
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--muted);
+    border-radius: 999px;
+    padding: 0.6rem 1.2rem;
+    font-family: var(--display);
+    font-weight: 500;
+    font-size: 0.88rem;
+    cursor: pointer;
+    transition: all 0.3s var(--ease);
+    user-select: none;
+  }
+  .chip input { display: none; }
+  .chip:hover { border-color: var(--gold); color: var(--text); transform: translateY(-2px); }
+  .chip.got {
+    border-color: var(--gold);
+    background: rgba(217, 169, 78, 0.14);
+    color: var(--gold-2);
+  }
 
-    label {
-      display: block;
-      margin-top: 22px;
-      margin-bottom: 8px;
-      font-size: 16px;
-    }
+  .form-nav { display: flex; justify-content: space-between; gap: 0.8rem; margin-top: 2.2rem; }
+  .error-msg { color: var(--crimson); font-size: 0.82rem; font-weight: 600; min-height: 1.2em; margin-top: 0.5rem; }
 
-    input,
-    textarea,
-    select {
-      width: 100%;
-      padding: 14px;
-      font-size: 16px;
-      background: var(--bg-dark);
-      color: var(--white);
-      border: 1px solid var(--border-soft);
-      border-radius: 12px;
-    }
+  .demo-fill {
+    position: absolute;
+    top: 0.9rem;
+    right: 1.2rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-family: var(--display);
+    font-size: 0.76rem;
+    font-weight: 500;
+    color: var(--muted);
+    background: transparent;
+    border: 1px solid var(--line-2);
+    border-radius: 999px;
+    padding: 0.45rem 0.9rem;
+    cursor: pointer;
+    transition: color 0.25s, border-color 0.25s, transform 0.2s;
+  }
+  .demo-fill:hover { color: var(--gold-2); border-color: var(--gold); transform: translateY(-2px); }
 
-    textarea {
-      resize: none;
-      min-height: 110px;
-    }
+  /* aside */
+  .form-aside { position: sticky; top: calc(var(--navh) + 3rem); }
+  .form-aside .kicker { margin-bottom: 1.2rem; }
+  .form-aside h2 { font-size: clamp(1.6rem, 3vw, 2.2rem); }
+  .form-aside > p { color: var(--muted); margin: 1rem 0 2rem; font-size: 0.96rem; line-height: 1.65; }
+  .aside-step {
+    display: flex;
+    gap: 0.9rem;
+    padding: 0.85rem 0;
+    border-top: 1px solid var(--line);
+    color: var(--dim);
+    font-size: 0.9rem;
+    transition: color 0.4s;
+  }
+  .aside-step:last-child { border-bottom: 1px solid var(--line); }
+  .aside-step i {
+    font-family: var(--display);
+    font-style: normal;
+    font-size: 0.76rem;
+    letter-spacing: 0.14em;
+    color: var(--dim);
+  }
+  .aside-step.on { color: var(--text); }
+  .aside-step.on i { color: var(--gold-2); }
 
-    .checkbox-group {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 18px;
-      margin-top: 10px;
-    }
+  @media (max-width: 940px) {
+    .form-page { grid-template-columns: 1fr; }
+    .form-aside { position: static; order: -1; }
+    .aside-step { display: none; }
+  }
+</style>
 
-    .checkbox-group label {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 15px;
-      margin-top: 0;
-    }
-
-    button {
-      margin-top: 40px;
-      width: 100%;
-      padding: 16px;
-      font-size: 18px;
-      font-weight: bold;
-      color: white;
-      border: none;
-      border-radius: 14px;
-      cursor: pointer;
-      background: linear-gradient(135deg, var(--purple), var(--pink));
-    }
-
-    button:hover {
-      opacity: 0.95;
-    }
-  </style>
-</head>
-<body>
-
-<div class="container">
-  <h1>Tell Us About Your Startup</h1>
-  <p class="subtitle">
-    Answer in simple words. Even a school student should understand.
-  </p>
-
-  <form method="POST">
+<main class="form-page">
+  <form id="ideaForm" class="form-card" method="POST">
     {% csrf_token %}
 
-    <!-- IDEA -->
-    <label>What is your startup idea?</label>
-    <textarea name="idea" placeholder="Example: An app that helps students choose careers using AI" required></textarea>
+    <button type="button" class="demo-fill" id="demoFill" title="Fill the form with a ready-made demo idea">Load a demo idea</button>
 
-    <label>What problem are you solving?</label>
-    <textarea name="problem" placeholder="Example: Students are confused about career options" required></textarea>
-
-    <!-- USERS -->
-    <label>Who faces this problem?</label>
-    <div class="checkbox-group">
-      <label><input type="checkbox" name="targets" value="Students"> Students</label>
-      <label><input type="checkbox" name="targets" value="Parents"> Parents</label>
-      <label><input type="checkbox" name="targets" value="Businesses"> Businesses</label>
+    <div class="progress-dots">
+      <i class="on" data-dot="0"></i>
+      <i data-dot="1"></i>
+      <i data-dot="2"></i>
+      <i data-dot="3"></i>
     </div>
 
-    <label>How does your idea help these users?</label>
-    <textarea name="solution" placeholder="Explain how your idea makes their life easier" required></textarea>
+    <!-- PANEL 1 -->
+    <div class="panel active" data-panel="0">
+      <p class="kicker">Step 1 — The idea</p>
+      <h1>What are you building?</h1>
+      <p class="hint">Use your own words. If a friend could repeat it back to you, you are ready.</p>
 
-    <!-- BUSINESS -->
-    <label>Business type</label>
-    <select name="business_type" required>
-      <option value="">Select one</option>
-      <option>EdTech</option>
-      <option>SaaS</option>
-      <option>AI Platform</option>
-      <option>E-Commerce</option>
-      <option>HealthTech</option>
-    </select>
-
-    <label>How will you earn money?</label>
-    <textarea name="revenue" placeholder="Example: Monthly subscription or commission" required></textarea>
-
-    <label>Why is your idea better than existing solutions?</label>
-    <textarea name="uniqueness" placeholder="Example: Uses AI, simple language, low cost" required></textarea>
-
-    <!-- AGENTS -->
-    <label>Which AI agents should analyze your startup?</label>
-    <div class="checkbox-group">
-      <label><input type="checkbox" name="agents" value="CEO" checked> CEO</label>
-      <label><input type="checkbox" name="agents" value="Marketing" checked> Marketing</label>
-      <label><input type="checkbox" name="agents" value="Finance" checked> Finance</label>
-      <label><input type="checkbox" name="agents" value="Tech" checked> Tech</label>
-      <label><input type="checkbox" checked disabled> Customer (Always Included)</label>
+      <div class="field">
+        <label for="idea">Your startup idea</label>
+        <textarea id="idea" name="idea" placeholder="An app that helps students pick a career using AI…" required></textarea>
+      </div>
+      <div class="field">
+        <label for="problem">What problem does it solve?</label>
+        <textarea id="problem" name="problem" placeholder="Students are overwhelmed by all the options…" required></textarea>
+      </div>
+      <div class="error-msg" data-error="0"></div>
     </div>
 
-    <button type="submit">Start AI Simulation</button>
+    <!-- PANEL 2 -->
+    <div class="panel" data-panel="1">
+      <p class="kicker">Step 2 — The people</p>
+      <h1>Who feels this problem?</h1>
+      <p class="hint">Pick everyone who would be helped by your idea.</p>
+
+      <div class="field">
+        <label>Who faces this problem?</label>
+        <div class="chips">
+          <label class="chip"><input type="checkbox" name="targets" value="Students" /><span>Students</span></label>
+          <label class="chip"><input type="checkbox" name="targets" value="Parents" /><span>Parents</span></label>
+          <label class="chip"><input type="checkbox" name="targets" value="Teachers" /><span>Teachers</span></label>
+          <label class="chip"><input type="checkbox" name="targets" value="Businesses" /><span>Businesses</span></label>
+        </div>
+      </div>
+      <div class="field">
+        <label for="solution">How does it make their life easier?</label>
+        <textarea id="solution" name="solution" placeholder="It asks three simple questions and shows a clear career map…" required></textarea>
+      </div>
+      <div class="error-msg" data-error="1"></div>
+    </div>
+
+    <!-- PANEL 3 -->
+    <div class="panel" data-panel="2">
+      <p class="kicker">Step 3 — The money</p>
+      <h1>How will it earn?</h1>
+      <p class="hint">Nothing fancy — just how people pay you.</p>
+
+      <div class="field">
+        <label for="business_type">What kind of business is it?</label>
+        <select id="business_type" name="business_type" required>
+          <option value="" disabled selected>Choose one…</option>
+          <option>EdTech</option>
+          <option>SaaS</option>
+          <option>AI Platform</option>
+          <option>E-Commerce</option>
+          <option>HealthTech</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="revenue">How will you earn money?</label>
+        <textarea id="revenue" name="revenue" placeholder="A small monthly subscription, or a fee per match…" required></textarea>
+      </div>
+      <div class="error-msg" data-error="2"></div>
+    </div>
+
+    <!-- PANEL 4 -->
+    <div class="panel" data-panel="3">
+      <p class="kicker">Step 4 — The difference</p>
+      <h1>Why would anyone switch?</h1>
+      <p class="hint">What makes yours different from what already exists?</p>
+
+      <div class="field">
+        <label for="uniqueness">Why is your idea better?</label>
+        <textarea id="uniqueness" name="uniqueness" placeholder="It is simpler, explains in plain words, and works offline…" required></textarea>
+      </div>
+
+      <div class="form-nav">
+        <button type="button" class="btn btn-ghost" data-back="2">Back</button>
+        <button type="submit" class="btn btn-gold btn-lg">Start the debate</button>
+      </div>
+      <div class="error-msg" data-error="3"></div>
+    </div>
+
+    <div class="form-nav" id="nextBar">
+      <span></span>
+      <button type="button" class="btn btn-primary btn-lg magnetic" id="nextBtn">Next</button>
+    </div>
   </form>
-</div>
-{% endblock content %}
-</body>
-</html>
+
+  <aside class="form-aside rv">
+    <p class="kicker">What happens next</p>
+    <h2>Your answers become a live debate.</h2>
+    <p>The room opens, the supervisor picks the team, and the agents start talking. You can jump in at any time.</p>
+    <div class="aside-step on" data-aside="0"><i>01</i> The idea</div>
+    <div class="aside-step" data-aside="1"><i>02</i> The people</div>
+    <div class="aside-step" data-aside="2"><i>03</i> The money</div>
+    <div class="aside-step" data-aside="3"><i>04</i> The difference</div>
+  </aside>
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  "use strict";
+  const $ = (s) => document.querySelector(s);
+  const panels = Array.from(document.querySelectorAll(".panel"));
+  const dots = Array.from(document.querySelectorAll(".progress-dots i"));
+  const asides = Array.from(document.querySelectorAll("[data-aside]"));
+  let current = 0;
+
+  document.querySelectorAll(".chip").forEach((chip) => {
+    chip.addEventListener("click", () => {
+      const input = chip.querySelector("input");
+      chip.classList.toggle("got", input.checked);
+    });
+  });
+
+  const DEMO = {
+    idea: "A mobile app that helps school students pick the right study stream using quick AI quizzes.",
+    problem: "Students and parents are overwhelmed by study options and often choose the wrong stream, wasting years.",
+    targets: ["Students", "Parents"],
+    solution: "It asks five simple questions, shows a shortlist of streams that fit, and explains each one in plain words.",
+    business_type: "EdTech",
+    revenue: "A monthly subscription of about 2 USD for families, plus free quizzes for schools.",
+    uniqueness: "No boring forms and no report-card grading. Just a friendly 10-minute quiz with a clear answer.",
+  };
+
+  $("#demoFill").addEventListener("click", () => {
+    $("#idea").value = DEMO.idea;
+    $("#problem").value = DEMO.problem;
+    $("#solution").value = DEMO.solution;
+    $("#business_type").value = DEMO.business_type;
+    $("#revenue").value = DEMO.revenue;
+    $("#uniqueness").value = DEMO.uniqueness;
+    document.querySelectorAll('input[name="targets"]').forEach((cb) => {
+      cb.checked = DEMO.targets.includes(cb.value);
+      const chip = cb.closest(".chip");
+      if (chip) chip.classList.toggle("got", cb.checked);
+    });
+    show(0);
+    document.querySelectorAll(".error-msg").forEach((e) => (e.textContent = ""));
+  });
+
+  function show(i) {
+    current = i;
+    panels.forEach((p, idx) => p.classList.toggle("active", idx === i));
+    dots.forEach((d, idx) => d.classList.toggle("on", idx <= i));
+    asides.forEach((a, idx) => a.classList.toggle("on", idx === i));
+    $("#nextBar").style.display = i === 3 ? "none" : "flex";
+    if (window.SA && window.SA.scrollTo) window.SA.scrollTo(0, { duration: 0.9 });
+    else window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function validate(i) {
+    const p = panels[i];
+    const err = p.querySelector("[data-error]");
+    if (!err) return true;
+    if (i === 0) {
+      const ok = $("#idea").value.trim() && $("#problem").value.trim();
+      err.textContent = ok ? "" : "Tell us both the idea and the problem before moving on.";
+      return !!ok;
+    }
+    if (i === 1) {
+      const targets = document.querySelectorAll('input[name="targets"]:checked').length;
+      const ok = targets > 0 && $("#solution").value.trim();
+      err.textContent = ok ? "" : targets === 0 ? "Pick at least one group of people." : "Add how your idea helps them.";
+      return !!ok;
+    }
+    if (i === 2) {
+      const ok = $("#business_type").value && $("#revenue").value.trim();
+      err.textContent = ok ? "" : "Pick a business type and a money plan.";
+      return !!ok;
+    }
+    return true;
+  }
+
+  $("#nextBtn").addEventListener("click", () => {
+    if (validate(current)) show(current + 1);
+  });
+
+  document.querySelectorAll("[data-back]").forEach((b) => {
+    b.addEventListener("click", () => show(parseInt(b.dataset.back, 10)));
+  });
+
+  $("#ideaForm").addEventListener("submit", (e) => {
+    if (!validate(3)) {
+      e.preventDefault();
+      return;
+    }
+    const btn = e.target.querySelector('button[type="submit"]');
+    if (btn) { btn.disabled = true; btn.textContent = "Opening the room…"; }
+  });
+})();
+</script>
+{% endblock %}

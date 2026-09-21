@@ -1,473 +1,158 @@
 {% extends "nav.html" %}
 {% load static %}
+{% block title %}About — VyavasAI{% endblock %}
+
 {% block content %}
-  
+<style>
+  .ab-hero {
+    max-width: var(--maxw);
+    margin: 0 auto;
+    padding: clamp(4rem, 10vw, 9rem) clamp(1.25rem, 4vw, 3rem) clamp(3rem, 6vw, 5rem);
+  }
+  .ab-hero .lead {
+    font-family: var(--display);
+    font-size: clamp(1.9rem, 4.6vw, 3.8rem);
+    font-weight: 400;
+    letter-spacing: -0.035em;
+    line-height: 1.1;
+    max-width: 1000px;
+    margin-top: 1.6rem;
+  }
+  .ab-hero .lead em { font-style: normal; color: var(--gold-2); }
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>About - Startup Agent</title>
+  .ab-split {
+    max-width: var(--maxw);
+    margin: 0 auto;
+    padding: 0 clamp(1.25rem, 4vw, 3rem) clamp(3rem, 6vw, 5rem);
+    display: grid;
+    grid-template-columns: 0.8fr 1.2fr;
+    gap: clamp(2rem, 6vw, 6rem);
+  }
+  .ab-split .label {
+    font-family: var(--display);
+    font-size: 0.78rem;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--dim);
+  }
+  .ab-split .prose p { color: var(--muted); font-size: 1.06rem; line-height: 1.75; }
+  .ab-split .prose p + p { margin-top: 1.3rem; }
+  .ab-split .prose b { color: var(--text); font-weight: 600; }
 
-  <!-- Google Font -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  .ab-principles {
+    max-width: var(--maxw);
+    margin: 0 auto;
+    padding: 0 clamp(1.25rem, 4vw, 3rem) clamp(3rem, 6vw, 5rem);
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    border-top: 1px solid var(--line);
+  }
+  .ab-principles .item {
+    padding: 2.6rem 2rem 2.6rem 0;
+    border-right: 1px solid var(--line);
+  }
+  .ab-principles .item:last-child { border-right: none; padding-right: 0; }
+  .ab-principles .item:not(:first-child) { padding-left: 2rem; }
+  .item .num { font-family: var(--display); color: var(--gold-2); font-size: 0.8rem; letter-spacing: 0.24em; }
+  .item h3 { font-size: 1.3rem; margin: 1rem 0 0.6rem; }
+  .item p { color: var(--muted); font-size: 0.94rem; line-height: 1.65; }
 
-  <style>
-    :root {
-      --bg-dark: #0b0c14;
-      --nav-bg: #5b5b66;
-      --card-bg: #14162a;
-      --purple: #a855f7;
-      --pink: #ec4899;
-      --text-muted: #a1a1aa;
-      --white: #ffffff;
-      --border-soft: rgba(255,255,255,0.08);
+  .ab-made {
+    max-width: var(--maxw);
+    margin: 0 auto;
+    padding: clamp(3rem, 6vw, 5rem) clamp(1.25rem, 4vw, 3rem) 0;
+    border-top: 1px solid var(--line);
+    display: flex;
+    justify-content: space-between;
+    gap: 2rem;
+    flex-wrap: wrap;
+  }
+  .ab-made .col span {
+    display: block;
+    font-family: var(--display);
+    font-size: 0.74rem;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--dim);
+    margin-bottom: 0.6rem;
+  }
+  .ab-made .col b { font-weight: 500; color: var(--muted); font-size: 0.95rem; }
+
+  @media (max-width: 860px) {
+    .ab-split { grid-template-columns: 1fr; }
+    .ab-principles { grid-template-columns: 1fr; }
+    .ab-principles .item,
+    .ab-principles .item:not(:first-child) {
+      border-right: none; border-bottom: 1px solid var(--line);
+      padding: 2rem 0;
     }
+    .ab-principles .item:last-child { border-bottom: none; }
+  }
+</style>
 
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: 'Inter', sans-serif;
-    }
-
-    body {
-      background: radial-gradient(circle at top, #15172a 0%, #0b0c14 60%);
-      color: var(--white);
-      min-height: 100vh;
-    }
-
- 
-
-    /* ================= HERO ================= */
-    .hero-section {
-      padding: 2rem 5% 1rem;
-      max-width: 1100px;
-      margin: 0 auto;
-      text-align: center;
-    }
-
-    .hero-title {
-      font-size: clamp(1.75rem, 4vw, 2.5rem);
-      font-weight: 800;
-      margin-bottom: 1rem;
-      background: linear-gradient(135deg, #fff, var(--purple));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      line-height: 1.2;
-    }
-
-    .hero-description {
-      font-size: 0.95rem;
-      color: var(--text-muted);
-      max-width: 750px;
-      margin: 0 auto 1rem;
-      line-height: 1.6;
-    }
-
-    /* ================= FLOW DIAGRAM ================= */
-    .flow-section {
-      padding: 1.5rem 5%;
-      max-width: 1100px;
-      margin: 0 auto;
-    }
-
-    .flow-container {
-      background: linear-gradient(135deg, #1a1c3c, #111328);
-      border: 1px solid var(--border-soft);
-      border-radius: 1.5rem;
-      padding: 2rem;
-      position: relative;
-    }
-
-    .flow-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 1rem;
-      margin-bottom: 1.5rem;
-    }
-
-    .flow-agent {
-      background: linear-gradient(180deg, #1f2140, #0f1025);
-      border: 1px solid rgba(168, 85, 247, 0.3);
-      border-radius: 1rem;
-      padding: 1rem;
-      text-align: center;
-      transition: all 0.3s ease;
-      position: relative;
-    }
-
-    .flow-agent:hover {
-      transform: translateY(-5px);
-      border-color: var(--purple);
-      box-shadow: 0 10px 30px rgba(168, 85, 247, 0.4);
-    }
-
-    .flow-agent-avatar {
-      width: 80px;
-      height: 100px;
-      margin: 0 auto 0.5rem;
-      border-radius: 0.75rem;
-      overflow: hidden;
-      border: 2px solid rgba(168, 85, 247, 0.3);
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
-    }
-
-    .flow-agent-avatar img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    .flow-agent-name {
-      font-size: 0.9rem;
-      font-weight: 700;
-      background: linear-gradient(135deg, var(--purple), var(--pink));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-
-    .flow-center {
-      text-align: center;
-      margin: 2rem 0;
-      position: relative;
-    }
-
-    .flow-arrows {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 0.5rem;
-      margin: 0.75rem 0;
-    }
-
-    .arrow-down {
-      font-size: 1.75rem;
-      color: var(--purple);
-      animation: bounce 2s infinite;
-    }
-
-    @keyframes bounce {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(8px); }
-    }
-
-    .collaboration-box {
-      background: linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(236, 72, 153, 0.2));
-      border: 2px solid var(--purple);
-      border-radius: 1rem;
-      padding: 1.5rem;
-      margin: 1rem 0;
-      text-align: center;
-    }
-
-    .collaboration-title {
-      font-size: 1.25rem;
-      font-weight: 800;
-      margin-bottom: 0.5rem;
-      background: linear-gradient(135deg, var(--purple), var(--pink));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-
-    .collaboration-text {
-      font-size: 0.875rem;
-      color: var(--text-muted);
-      line-height: 1.5;
-    }
-
-    /* ================= GOAL SECTION ================= */
-    .goal-section {
-      padding: 1.5rem 5% 2rem;
-      max-width: 1100px;
-      margin: 0 auto;
-    }
-
-    .goal-box {
-      background: linear-gradient(135deg, #1a1c3c, #111328);
-      border: 2px solid rgba(168, 85, 247, 0.4);
-      border-radius: 1.5rem;
-      padding: 2rem;
-      text-align: center;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .goal-box::before {
-      content: '🎯';
-      position: absolute;
-      top: -20px;
-      right: -20px;
-      font-size: 8rem;
-      opacity: 0.05;
-    }
-
-    .goal-label {
-      font-size: 0.75rem;
-      font-weight: 600;
-      color: var(--purple);
-      text-transform: uppercase;
-      letter-spacing: 2px;
-      margin-bottom: 0.5rem;
-    }
-
-    .goal-title {
-      font-size: 1.5rem;
-      font-weight: 800;
-      margin-bottom: 1rem;
-      background: linear-gradient(135deg, var(--purple), var(--pink));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-
-    .goal-text {
-      font-size: 0.95rem;
-      color: var(--text-muted);
-      line-height: 1.6;
-      max-width: 650px;
-      margin: 0 auto;
-    }
-
-    .goal-features {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 1rem;
-      margin-top: 1.5rem;
-    }
-
-    .goal-feature {
-      background: rgba(168, 85, 247, 0.1);
-      border: 1px solid rgba(168, 85, 247, 0.3);
-      border-radius: 0.75rem;
-      padding: 1rem;
-      transition: all 0.3s ease;
-    }
-
-    .goal-feature:hover {
-      background: rgba(168, 85, 247, 0.2);
-      transform: translateY(-3px);
-      box-shadow: 0 8px 25px rgba(168, 85, 247, 0.3);
-    }
-
-    .goal-feature-icon {
-      font-size: 2rem;
-      margin-bottom: 0.5rem;
-    }
-
-    .goal-feature-text {
-      font-size: 0.85rem;
-      font-weight: 600;
-      color: var(--white);
-    }
-
-    /* ================= FOOTER ================= */
-    footer {
-      background: linear-gradient(180deg, #0b0c14 0%, #14162a 100%);
-      border-top: 1px solid var(--border-soft);
-      padding: 1.25rem 5%;
-      margin-top: 2rem;
-      text-align: center;
-    }
-
-    .footer-content {
-      max-width: 1400px;
-      margin: 0 auto;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 2rem;
-      flex-wrap: wrap;
-    }
-
-    .footer-content p {
-      color: var(--text-muted);
-      font-size: 0.8rem;
-      margin: 0;
-    }
-
-    .footer-links {
-      display: flex;
-      gap: 1.5rem;
-      flex-wrap: wrap;
-      justify-content: center;
-    }
-
-    .footer-links a {
-      color: var(--text-muted);
-      text-decoration: none;
-      font-size: 0.8rem;
-      transition: color 0.2s;
-    }
-
-    .footer-links a:hover {
-      color: var(--purple);
-    }
-
-    /* ================= RESPONSIVE ================= */
-    @media (max-width: 1024px) {
-      .flow-grid {
-        grid-template-columns: repeat(2, 1fr);
-      }
-    }
-
-    @media (max-width: 768px) {
-      .nav-links {
-        order: 3;
-        width: 100%;
-        justify-content: center;
-        gap: 1rem;
-      }
-
-      .flow-grid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 0.75rem;
-      }
-
-      .goal-features {
-        grid-template-columns: 1fr;
-      }
-
-      .flow-container {
-        padding: 1.5rem 1rem;
-      }
-
-      .goal-box {
-        padding: 1.5rem;
-      }
-    }
-
-    @media (max-width: 480px) {
-      .flow-grid {
-        grid-template-columns: 1fr;
-      }
-    }
-  </style>
-</head>
-<body>
-
-  <!-- HERO SECTION -->
-  <section class="hero-section">
-    <h1 class="hero-title">Building Startups with<br/>AI-Powered Agents</h1>
-    <p class="hero-description">
-      Startup Agent is an AI-powered platform designed to help students, founders, and innovators 
-      simulate real startup decision-making. It uses intelligent agents that represent real-world 
-      roles like CEO, Marketing, Finance, and Customer to analyze ideas, debate strategies, and 
-      provide meaningful insights.
+<main>
+  <section class="ab-hero">
+    <p class="kicker">About</p>
+    <p class="lead">
+      Entrepreneurship is learned by doing. VyavasAI gives every first-timer
+      <em>a whole founding team</em> — before they risk a single dollar.
     </p>
   </section>
 
-  <!-- FLOW SECTION -->
-  <section class="flow-section">
-    <div class="flow-container">
-      
-      <!-- Agent Grid -->
-      <div class="flow-grid">
-        <div class="flow-agent">
-          <div class="flow-agent-avatar">
-            <img src="{% static 'core/images/lucid-origin_Futuristic_AI_CEO_avatar_humanoid_android_leader_wearing_a_sleek_black_tech_suit-0.jpg' %}" alt="CEO Agent">
-          </div>
-          <div class="flow-agent-name">CEO</div>
-        </div>
-
-        <div class="flow-agent">
-          <div class="flow-agent-avatar">
-            <img src="{% static 'core/images/lucid-origin_Futuristic_AI_marketing_agent_avatar_energetic_humanoid_robot_stylish_futuristic-0.jpg' %}" alt="Marketing Agent">
-          </div>
-          <div class="flow-agent-name">Marketing</div>
-        </div>
-
-        <div class="flow-agent">
-          <div class="flow-agent-avatar">
-            <img src="{% static 'core/images/lucid-origin_Futuristic_AI_finance_agent_avatar_calm_and_analytical_humanoid_android_minimali-0.jpg' %}" alt="Finance Agent">
-          </div>
-          <div class="flow-agent-name">Finance</div>
-        </div>
-
-        <div class="flow-agent">
-          <div class="flow-agent-avatar">
-            <img src="{% static 'core/images/lucid-origin_Futuristic_AI_customer_agent_avatar_humanoid_android_with_human-like_warmth_soft-0.jpg' %}" alt="Customer Agent">
-          </div>
-          <div class="flow-agent-name">Customer</div>
-        </div>
-      </div>
-
-      <!-- Arrows -->
-      <div class="flow-arrows">
-        <div class="arrow-down">↓</div>
-        <div class="arrow-down">↓</div>
-        <div class="arrow-down">↓</div>
-      </div>
-
-      <!-- Collaboration Box -->
-      <div class="collaboration-box">
-        <div class="collaboration-title">🤝 AI Agents Collaborate</div>
-        <p class="collaboration-text">
-          All agents work together, analyze your startup idea from different perspectives, 
-          debate strategies, and reach consensus to provide you with comprehensive insights 
-          and actionable recommendations.
-        </p>
-      </div>
-
-      <!-- Result Arrows -->
-      <div class="flow-arrows">
-        <div class="arrow-down">↓</div>
-      </div>
-
-      <!-- Result Box -->
-      <div class="collaboration-box" style="background: linear-gradient(135deg, rgba(236, 72, 153, 0.2), rgba(168, 85, 247, 0.2));">
-        <div class="collaboration-title">✨ You Get Results</div>
-        <p class="collaboration-text">
-          Receive detailed strategies, risk assessments, market insights, financial projections, 
-          and a clear roadmap to turn your startup idea into reality.
-        </p>
-      </div>
-
-    </div>
-  </section>
-
-  <!-- GOAL SECTION -->
-  <section class="goal-section">
-    <div class="goal-box">
-      <div class="goal-label">Our Mission</div>
-      <h2 class="goal-title">The Goal</h2>
-      <p class="goal-text">
-        To make entrepreneurship learning interactive, practical, and accessible through 
-        simulation and AI collaboration.
+  <section class="ab-split">
+    <span class="label">Why it exists</span>
+    <div class="prose">
+      <p>
+        Most startup advice is either a motivational poster or a 40-slide deck. Neither
+        tells you the one thing you need to hear: <b>where your idea is weak.</b>
       </p>
-
-      <div class="goal-features">
-        <div class="goal-feature">
-          <div class="goal-feature-icon">🎓</div>
-          <div class="goal-feature-text">Interactive Learning</div>
-        </div>
-        <div class="goal-feature">
-          <div class="goal-feature-icon">💡</div>
-          <div class="goal-feature-text">Practical Insights</div>
-        </div>
-        <div class="goal-feature">
-          <div class="goal-feature-icon">🌍</div>
-          <div class="goal-feature-text">Accessible for All</div>
-        </div>
-      </div>
+      <p>
+        So we built a room. A supervisor assembles the right specialists, they debate your
+        idea across rounds, a chair keeps them honest, and a judge grades the result.
+        It runs on a LangGraph workflow with Django — built for the Imagine Cup.
+      </p>
+      <p>
+        Everything happens in plain language. If a ten-year-old cannot follow the debate,
+        we consider it a bug.
+      </p>
     </div>
   </section>
 
-  <!-- FOOTER -->
-  <footer>
-    <div class="footer-content">
-      <p>&copy; 2025 Startup Agent. Built for Imagine Cup 2025.</p>
-      <div class="footer-links">
-        <a href="#">Privacy</a>
-        <a href="#">Terms</a>
-        <a href="#">Contact</a>
-      </div>
+  <section class="ab-principles">
+    <div class="item rv">
+      <span class="num">01</span>
+      <h3>Learn by watching</h3>
+      <p>You do not read about startups here. You watch one get stress-tested in front of you.</p>
     </div>
-  </footer>
-{% endblock content %}
-</body>
-</html>
+    <div class="item rv">
+      <span class="num">02</span>
+      <h3>Honest over kind</h3>
+      <p>A clear score and real next steps, not a generic pep talk. The room is designed to disagree.</p>
+    </div>
+    <div class="item rv">
+      <span class="num">03</span>
+      <h3>Built for everyone</h3>
+      <p>No jargon, no paywall, no gatekeeping. Bring any idea and the doors open.</p>
+    </div>
+  </section>
+
+  <section class="ab-made">
+    <div class="col">
+      <span>Built with</span>
+      <b>Django · LangGraph · Groq · GSAP</b>
+    </div>
+    <div class="col">
+      <span>Made for</span>
+      <b>Imagine Cup 2026</b>
+    </div>
+  </section>
+
+  <section class="section shell">
+    <div class="cta-band rv">
+      <h2>The boardroom doors stay open.</h2>
+      <p>Bring any idea — yours gets the same full debate.</p>
+      <a href="{% url 'startup' %}" class="btn btn-gold btn-lg magnetic">Start your simulation</a>
+    </div>
+  </section>
+</main>
+{% endblock %}

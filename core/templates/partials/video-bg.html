@@ -1,0 +1,23 @@
+{% load static %}
+{% comment %}
+  Reusable cinematic video background.
+
+  Usage (relative to STATIC_ROOT):
+    {% include "partials/video-bg.html" with src="core/videos/hero.mp4" tag="VyavasAI" %}
+    {% include "partials/video-bg.html" with vclass="final-bg" %}
+
+  `src` is resolved through the static tag against STATIC_URL.
+  If it is omitted — or the file 404s — the animated CSS fallback is shown, so
+  the layout always looks intentional. Drop real .mp4 files at
+  core/static/core/videos/ later and they play automatically.
+{% endcomment %}
+<div class="video-bg {{ vclass }}" data-video-bg>
+  {% if src %}
+  <video class="video-bg__vid" autoplay muted loop playsinline preload="none"{% if poster %} poster="{% static poster %}"{% endif %}>
+    <source src="{% static src %}" type="video/mp4" />
+  </video>
+  {% endif %}
+  <div class="video-bg__fallback" aria-hidden="true"></div>
+  <div class="video-bg__overlay" aria-hidden="true"{% if overlay %} style="opacity:{{ overlay }}"{% endif %}></div>
+  {% if tag %}<span class="video-bg__tag">{{ tag }}</span>{% endif %}
+</div>

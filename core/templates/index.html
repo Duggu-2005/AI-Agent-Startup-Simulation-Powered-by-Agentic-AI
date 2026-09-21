@@ -1,154 +1,380 @@
 {% extends "nav.html" %}
 {% load static %}
+{% block title %}VyavasAI — Build. Simulate. Decide.{% endblock %}
 
 {% block content %}
-  
-
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Startup Agent</title>
-  <link rel="stylesheet" href="{% static 'core/index.css' %}">
-  <!-- Google Font -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-
-
-</head>
-<body>
-
-  
-
-  <!-- HERO -->
-  <section class="hero">
-    <div class="hero-content">
-      <div class="badge">⚡ Imagine Cup 2025 · AI Startup Simulation</div>
-
-      <h1>
-        Build Your Startup<br/>
-        <span>With AI Agents</span>
-      </h1>
-
-      <p>
-        Simulate real startup decisions using autonomous AI agents
-        that think, debate, and collaborate like a real founding team.
-      </p>
-
-      <div class="hero-buttons">
-        <a class="btn-primary" href="{% url 'startup' %}">🚀 Start Simulation</a>
-        <a class="btn-secondary" href="{% url 'demo' %}">📘 View Demo</a>
-      </div>
-    </div>
-
-    <!-- FLOW -->
-    <div class="flow">
-      <div class="flow-card">
-        <h4>CEO Agent</h4>
-        <span>Strategy & Vision</span>
-      </div>
-      <div class="arrow"></div>
-
-      <div class="flow-card">
-        <h4>Marketing Agent</h4>
-        <span>Growth & Branding</span>
-      </div>
-      <div class="arrow"></div>
-
-      <div class="flow-card">
-        <h4>Finance Agent</h4>
-        <span>Cost & Revenue</span>
-      </div>
-      <div class="arrow"></div>
-
-      <div class="flow-card">
-        <h4>Customer Agent</h4>
-        <span>Feedback & Needs</span>
-      </div>
-    </div>
-  </section>
-
-  <!-- AGENTS -->
-  <section class="agents">
-    <h2>Meet Our AI Agents :-</h2>
-
-    <div class="agent-grid">
-      <div class="agent">
-        <div class="agent-img">
-          <img src="{% static 'core/images/lucid-origin_Futuristic_AI_CEO_avatar_humanoid_android_leader_wearing_a_sleek_black_tech_suit-0.jpg' %}" alt="AI CEO Avatar">
-        </div>
-        <h4>CEO</h4>
-      </div>
-
-      <div class="agent">
-        <div class="agent-img">
-          <img src="{% static 'core/images/lucid-origin_Futuristic_AI_marketing_agent_avatar_energetic_humanoid_robot_stylish_futuristic-0.jpg' %}" alt="AI Marketing Avatar">
-        </div>
-        <h4>Marketing</h4>
-      </div>
-
-      <div class="agent">
-        <div class="agent-img">
-          <img src="{% static 'core/images/lucid-origin_Futuristic_AI_finance_agent_avatar_calm_and_analytical_humanoid_android_minimali-0.jpg' %}" alt="AI Finance Avatar">
-        </div>
-        <h4>Finance</h4>
-      </div>
-
-      <div class="agent">
-        <div class="agent-img">
-          <img src="{% static 'core/images/lucid-origin_Futuristic_AI_customer_agent_avatar_humanoid_android_with_human-like_warmth_soft-0.jpg' %}" alt="AI Customer Avatar">
-        </div>
-        <h4>Customer</h4>
-      </div>
-      <div class="agent">
-        <div class="agent-img">
-          <img src="{% static 'core/images/tech.png' %}" alt="AI Customer Avatar">
-        </div>
-        <h4>Technical</h4>
-      </div>
-    </div>
-  </section>
-
-  <!-- FOOTER -->
-  <footer>
-    <div class="footer-content">
-      <p>&copy; 2025 Startup Agent. Built for Imagine Cup 2025.</p>
-      <div class="footer-links">
-        <a href="#">Privacy</a>
-        <a href="#">Terms</a>
-        <a href="#">Contact</a>
-      </div>
-    </div>
-  </footer>
-
-<script src="https://cdn.jsdelivr.net/npm/lenis@1.3.23/dist/lenis.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/ScrollTrigger/1.0.6/ScrollTrigger.min.js"></script>
-<script>
-  const lenis = new Lenis({
-    duration: 0.8,
-    smooth: true,
-    smoothTouch: false,
-  });
-
-
-  // ✅ RAF LOOP (IMPORTANT)
-  function raf(time) {
-    lenis.raf(time);
-    requestAnimationFrame(raf);
+<style>
+  /* page-specific: pinned story + problem list */
+  .story--pin { position: relative; }
+  .story--pin .story__head {
+    position: absolute;
+    top: clamp(4.5rem, 12vh, 8rem);
+    left: 0; right: 0;
+    z-index: 2;
   }
-  requestAnimationFrame(raf);
+  .story--pin .story__head h2 {
+    font-family: var(--display);
+    font-size: clamp(1.5rem, 3.4vw, 2.6rem);
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    text-transform: uppercase;
+    margin-top: 0.9rem;
+  }
+  .story__cta {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    margin-top: 1.1rem; font-family: var(--display); font-size: 0.84rem;
+    color: var(--gold-2);
+  }
+  .story__cta:hover { gap: 0.85rem; }
 
-  // ✅ GSAP SYNC
-  lenis.on('scroll', ScrollTrigger.update);
+  .problem-list { border-top: 1px solid var(--line); margin-top: clamp(2.5rem, 6vw, 4rem); }
+  .problem-item {
+    display: grid;
+    grid-template-columns: 90px 1fr;
+    gap: clamp(1rem, 3vw, 3rem);
+    padding: clamp(1.6rem, 3vw, 2.4rem) 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .problem-item .n {
+    font-family: var(--display); font-size: 0.78rem;
+    letter-spacing: 0.24em; color: var(--gold-2);
+  }
+  .problem-item h3 {
+    font-family: var(--display);
+    font-size: clamp(1.2rem, 2.4vw, 1.9rem);
+    font-weight: 500; letter-spacing: -0.02em;
+  }
+  .problem-item p { color: var(--muted); margin-top: 0.6rem; max-width: 620px; line-height: 1.65; }
 
-  gsap.ticker.add((time) => {
-    lenis.raf(time * 1000);
-  });
+  @media (max-width: 860px) {
+    .story--pin { height: auto; display: block; padding: clamp(4rem, 10vw, 6rem) 0; }
+    .story--pin .story__head { position: static; }
+    .story__track { flex-direction: column; align-items: stretch; gap: 2.2rem; overflow: visible !important; padding-bottom: 0; }
+    .story-panel { width: 100%; }
+    .story-progress { display: none; }
+  }
 
-  gsap.ticker.lagSmoothing(0);
+  @media (max-width: 720px) {
+    .problem-item { grid-template-columns: 1fr; gap: 0.5rem; }
+  }
+</style>
+
+<main>
+  <!-- ================= HERO ================= -->
+  <section class="hero-cine" id="top">
+    {% include "partials/video-bg.html" with src="core/videos/hero.mp4" tag="VyavasAI" %}
+    <div class="shell">
+      <p class="hero-cine__label">VyavasAI — AI Startup Simulation</p>
+      <h1>
+        <span class="line"><span>Build.</span></span>
+        <span class="line"><span class="thin">Simulate.</span></span>
+        <span class="line"><span>Decide.</span></span>
+      </h1>
+      <div class="hero-cine__foot">
+        <p class="hero-cine__sub">Turn an idea into a living business simulation powered by a team of AI agents.</p>
+        <div class="hero-cine__actions">
+          <a href="#product" class="btn btn-primary btn-lg magnetic" data-cursor="Enter">Explore VyavasAI →</a>
+          <a href="{% url 'startup' %}" class="btn btn-ghost btn-lg">Open the boardroom</a>
+        </div>
+      </div>
+      <a href="#manifesto" class="scroll-enter">Scroll to enter <i></i></a>
+    </div>
+  </section>
+
+  <!-- ================= MANIFESTO ================= -->
+  <section class="manifesto shell" id="manifesto">
+    <h2 class="manifesto__big">
+      <span class="line"><span>Startups don't fail</span></span>
+      <span class="line"><span>because of one <span class="fade">decision.</span></span></span>
+      <span class="line"><span>They fail because</span></span>
+      <span class="line"><span>of <span class="grad-text">thousands.</span></span></span>
+    </h2>
+    <p class="manifesto__note rv">
+      VyavasAI lets you experience those decisions before they become real —
+      pressure-test the market, the money, the message and the customer, while it is still cheap to be wrong.
+    </p>
+  </section>
+
+  <!-- ================= THE PROBLEM ================= -->
+  <section class="section shell">
+    <div class="section-head rv">
+      <p class="kicker">The problem</p>
+      <h2>Founders learn the truth too late.</h2>
+    </div>
+    <div class="problem-list">
+      <div class="problem-item rv">
+        <span class="n">01</span>
+        <div><h3>Advice is generic</h3><p>Everyone has an opinion. Almost none of it is grounded in your specific idea, your customer or your numbers.</p></div>
+      </div>
+      <div class="problem-item rv">
+        <span class="n">02</span>
+        <div><h3>The cost of a decision arrives after you make it</h3><p>Pricing, positioning, hiring, burn — you only discover the mistake once the money and the months are gone.</p></div>
+      </div>
+      <div class="problem-item rv">
+        <span class="n">03</span>
+        <div><h3>Feedback loops are slow and expensive</h3><p>Real market feedback takes months. A simulated one takes minutes — and it never gets tired of your questions.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= STARTUP SIMULATION (pinned) ================= -->
+  <section class="story story--pin" id="simulation">
+    <div class="story__head shell">
+      <p class="kicker">The simulation</p>
+      <h2>Idea → strategy → decisions → growth</h2>
+    </div>
+
+    <div class="story__track" id="storyTrack">
+      <article class="story-panel">
+        <span class="story-panel__idx">Stage 01</span>
+        <h3 class="story-panel__word">Idea</h3>
+        <p class="story-panel__desc">You describe what you are building, who it is for and how it earns — in your own words.</p>
+      </article>
+      <article class="story-panel">
+        <span class="story-panel__idx">Stage 02</span>
+        <h3 class="story-panel__word">Market</h3>
+        <p class="story-panel__desc">The room sizes the opportunity, names the incumbents and tests whether the timing is real.</p>
+      </article>
+      <article class="story-panel">
+        <span class="story-panel__idx">Stage 03</span>
+        <h3 class="story-panel__word">Customers</h3>
+        <p class="story-panel__desc">A customer voice argues back: what they would actually pay for, and what makes them hesitate.</p>
+      </article>
+      <article class="story-panel">
+        <span class="story-panel__idx">Stage 04</span>
+        <h3 class="story-panel__word"><em>Marketing</em></h3>
+        <p class="story-panel__desc">Acquisition cost, positioning and the one line that makes the right person stop scrolling.</p>
+      </article>
+      <article class="story-panel">
+        <span class="story-panel__idx">Stage 05</span>
+        <h3 class="story-panel__word">Finance</h3>
+        <p class="story-panel__desc">Pricing, burn and runway — the honest arithmetic behind the ambition.</p>
+      </article>
+      <article class="story-panel">
+        <span class="story-panel__idx">Stage 06</span>
+        <h3 class="story-panel__word">Decisions</h3>
+        <p class="story-panel__desc">Trade-offs are surfaced and pressure-tested, so you can feel the consequences before they are permanent.</p>
+      </article>
+      <article class="story-panel">
+        <span class="story-panel__idx">Stage 07</span>
+        <h3 class="story-panel__word"><em>Growth</em></h3>
+        <p class="story-panel__desc">You leave with a verdict, a score and the three moves that matter next.</p>
+      </article>
+    </div>
+
+    <div class="story-progress" aria-hidden="true">
+      <b id="storyNow">01</b><i><span id="storyBar"></span></i><span>07</span>
+    </div>
+  </section>
+
+  <!-- ================= AI TEAM ================= -->
+  <section class="section shell" id="team">
+    <div class="rv">
+      <p class="kicker">The AI team</p>
+      <h2 class="minds__title">Four minds.<br /><em>One company.</em></h2>
+    </div>
+
+    <div class="minds">
+      <div class="mind a-ceo rv">
+        <span class="mind__idx">01</span>
+        <div class="mind__role">CEO<span>Strategy</span></div>
+        <p class="mind__quote"><b>“Where should we go?”</b> Weighs the dream against reality and decides if this can become a company.</p>
+        <div class="mind__ava"><img src="{% static 'core/images/lucid-origin_Futuristic_AI_CEO_avatar_humanoid_android_leader_wearing_a_sleek_black_tech_suit-0.jpg' %}" alt="CEO agent" loading="lazy" /></div>
+      </div>
+      <div class="mind a-marketing rv">
+        <span class="mind__idx">02</span>
+        <div class="mind__role">Marketing<span>Growth</span></div>
+        <p class="mind__quote"><b>“How do we get there?”</b> Finds the first hundred users and the message that earns their attention.</p>
+        <div class="mind__ava"><img src="{% static 'core/images/lucid-origin_Futuristic_AI_marketing_agent_avatar_energetic_humanoid_robot_stylish_futuristic-0.jpg' %}" alt="Marketing agent" loading="lazy" /></div>
+      </div>
+      <div class="mind a-finance rv">
+        <span class="mind__idx">03</span>
+        <div class="mind__role">Finance<span>Capital</span></div>
+        <p class="mind__quote"><b>“Can we afford it?”</b> Stress-tests pricing, costs and the single expense that could empty the bank.</p>
+        <div class="mind__ava"><img src="{% static 'core/images/lucid-origin_Futuristic_AI_finance_agent_avatar_calm_and_analytical_humanoid_android_minimali-0.jpg' %}" alt="Finance agent" loading="lazy" /></div>
+      </div>
+      <div class="mind a-customer rv">
+        <span class="mind__idx">04</span>
+        <div class="mind__role">Customer<span>Demand</span></div>
+        <p class="mind__quote"><b>“Will anyone care?”</b> Speaks for the person who actually has to use it — and pay for it.</p>
+        <div class="mind__ava"><img src="{% static 'core/images/lucid-origin_Futuristic_AI_customer_agent_avatar_humanoid_android_with_human-like_warmth_soft-0.jpg' %}" alt="Customer agent" loading="lazy" /></div>
+      </div>
+    </div>
+
+    <div style="margin-top:2.4rem">
+      <a href="{% url 'agents' %}" class="btn btn-ghost">Meet the full room →</a>
+    </div>
+  </section>
+
+  <!-- ================= DECISION ENGINE (Three.js) ================= -->
+  <section class="engine" id="engine">
+    <div class="engine__canvas" id="engineCanvas" aria-hidden="true"></div>
+    <div class="engine__fallback" aria-hidden="true"></div>
+    <div class="shell">
+      <div class="engine__copy rv">
+        <p class="kicker">The decision engine</p>
+        <h2>Every choice moves<br />the whole system.</h2>
+        <p>A living map of your business — market, customers, capital, product and growth, each pulling on the others. Change one, watch the rest respond.</p>
+        <div class="engine__legend">
+          <span><i></i>Market</span>
+          <span><i></i>Customers</span>
+          <span><i></i>Capital</span>
+          <span><i></i>Product</span>
+          <span><i></i>Growth</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= SIMULATION EXPERIENCE ================= -->
+  <section class="sim shell" id="sim">
+    <div class="section-head rv">
+      <p class="kicker">Inside a run</p>
+      <h2>A boardroom, not a chatbot.</h2>
+      <p>Agents react to each other, the chair holds the thread, and the judge turns the whole debate into a verdict you can act on.</p>
+    </div>
+
+    <div class="sim__thread">
+      <div class="sim-line s-user rv"><span class="sim-line__who">Founder</span><p class="sim-line__say">“We are launching an AI productivity platform for students.”</p></div>
+      <div class="sim-line s-ceo rv"><span class="sim-line__who">CEO</span><p class="sim-line__say">“Position the product around measurable productivity, not vague focus.”</p></div>
+      <div class="sim-line s-mkt rv"><span class="sim-line__who">Marketing</span><p class="sim-line__say">“Student acquisition cost may become the constraint long before the product does.”</p></div>
+      <div class="sim-line s-fin rv"><span class="sim-line__who">Finance</span><p class="sim-line__say">“At the current burn rate, runway is eight months — pricing has to carry the growth.”</p></div>
+      <div class="sim-line s-cust rv"><span class="sim-line__who">Customer</span><p class="sim-line__say">“I like the concept, but I hesitate to pay for something my phone already half does.”</p></div>
+    </div>
+
+    <div class="sim__result">
+      <div class="sim__verdict rv">
+        <span class="sim__verdict-label">Simulation result</span>
+        <h2>Strong product, unresolved pricing.</h2>
+      </div>
+      <div class="sim__metrics">
+        <div class="metric rv"><b data-count="72" data-suffix="%">72%</b><span>Market fit</span></div>
+        <div class="metric rv"><b data-count="8" data-suffix=" months">8 months</b><span>Runway</span></div>
+        <div class="metric rv"><b data-count="61" data-suffix="%">61%</b><span>Customer retention</span></div>
+        <div class="metric rv"><b data-count="34" data-prefix="+" data-suffix="%">+34%</b><span>Growth</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= PRODUCT REVEAL ================= -->
+  <section class="reveal shell" id="product">
+    <div class="section-head rv">
+      <p class="kicker">The product</p>
+      <h2>Your idea, in a room that answers back.</h2>
+      <p>Ask it in plain language. Watch the agents take positions, and get a scored verdict with next steps — in minutes.</p>
+    </div>
+
+    <div class="reveal__stage">
+      <div class="product-ui" data-cursor="Explore">
+        <div class="dash">
+          <aside class="dash__side">
+            <div class="dash__brand"><i></i> VyavasAI</div>
+            <nav class="dash__nav">
+              <a class="on">Boardroom</a>
+              <a>Simulations</a>
+              <a>Agents</a>
+              <a>Verdicts</a>
+              <a>Settings</a>
+            </nav>
+            <div class="dash__card" style="margin-top:auto">
+              <h5>Live run</h5>
+              <p style="font-size:.78rem;color:var(--muted);line-height:1.5">Round 2 of 3 · Judge ready</p>
+            </div>
+          </aside>
+          <div class="dash__main">
+            <div class="dash__top">
+              <h4>AI study companion — for students</h4>
+              <span class="dash__pill">Simulated · 7 agents</span>
+            </div>
+            <div class="dash__grid">
+              <div class="dash__card">
+                <h5>Verdict</h5>
+                <div class="dash__score">
+                  <div class="dash__ring" style="--p:64"><b>64</b></div>
+                  <div class="dash__scorelist">
+                    <div class="dash__bar"><span>Market <b>7</b></span><i style="--w:70%"></i></div>
+                    <div class="dash__bar"><span>Business <b>6</b></span><i style="--w:60%"></i></div>
+                    <div class="dash__bar"><span>Revenue <b>5</b></span><i style="--w:50%"></i></div>
+                    <div class="dash__bar"><span>Tech <b>8</b></span><i style="--w:80%"></i></div>
+                  </div>
+                </div>
+              </div>
+              <div class="dash__card dash__feed">
+                <h5>Boardroom feed</h5>
+                <div class="dash__msg"><i>●</i><p><b>CEO</b> — Lead with measured focus, not features.</p></div>
+                <div class="dash__msg"><i>●</i><p><b>Finance</b> — Price at ₹199; runway holds to 8 months.</p></div>
+                <div class="dash__msg"><i>●</i><p><b>Customer</b> — I'd try it, but free is doing too much.</p></div>
+              </div>
+            </div>
+            <div class="dash__card">
+              <h5>Recommended next steps</h5>
+              <div class="dash__msg"><i>1</i><p>Test a ₹199 student plan against a free tier.</p></div>
+              <div class="dash__msg"><i>2</i><p>Make “measurable productivity” the hero claim.</p></div>
+              <div class="dash__msg"><i>3</i><p>Cap the first cohort at 200 to keep burn flat.</p></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="text-align:center;margin-top:2.6rem" class="rv">
+      <a href="{% url 'startup' %}" class="btn btn-primary btn-lg magnetic">Simulate your startup →</a>
+    </div>
+  </section>
+
+  <!-- ================= FINAL CTA ================= -->
+  <section class="final">
+    {% include "partials/video-bg.html" with src="core/videos/simulation.mp4" tag="Enter" %}
+    <div class="shell">
+      <h2>
+        <span class="line"><span>Ready to</span></span>
+        <span class="line"><span>simulate</span></span>
+        <span class="line"><span>your <em>startup?</em></span></span>
+      </h2>
+      <a href="{% url 'startup' %}" class="btn btn-gold btn-lg magnetic" data-cursor="Enter">Enter VyavasAI →</a>
+    </div>
+  </section>
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/three@0.134.0/build/three.min.js"></script>
+<script src="{% static 'core/js/three-scene.js' %}"></script>
+<script>
+(function () {
+  "use strict";
+  if (!window.gsap) return;
+  gsap.registerPlugin(ScrollTrigger);
+
+  /* ---- pinned horizontal story ---- */
+  var section = document.getElementById("simulation");
+  var track = document.getElementById("storyTrack");
+  var bar = document.getElementById("storyBar");
+  var now = document.getElementById("storyNow");
+  if (section && track && window.matchMedia("(min-width: 861px)").matches) {
+    var panels = track.children.length;
+    var getDistance = function () { return Math.max(0, track.scrollWidth - window.innerWidth); };
+    gsap.to(track, {
+      x: function () { return -getDistance(); },
+      ease: "none",
+      scrollTrigger: {
+        trigger: section,
+        start: "top top",
+        end: function () { return "+=" + (getDistance() + window.innerHeight * 0.6); },
+        pin: true,
+        scrub: 1,
+        invalidateOnRefresh: true,
+        onUpdate: function (self) {
+          var idx = Math.min(panels, Math.max(1, Math.round(self.progress * (panels - 1)) + 1));
+          if (bar) bar.style.width = (self.progress * 100).toFixed(1) + "%";
+          if (now) now.textContent = ("0" + idx).slice(-2);
+        }
+      }
+    });
+  } else if (bar) {
+    /* mobile: panels stack vertically — just fill the progress rail */
+    bar.style.width = "100%";
+  }
+})();
 </script>
-{% endblock content %}
-</body>
-</html>
-
+{% endblock %}

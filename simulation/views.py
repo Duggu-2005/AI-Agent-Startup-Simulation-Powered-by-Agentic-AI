@@ -1,6 +1,10 @@
-from django.shortcuts import render, redirect
+import json
+
 from django.http import JsonResponse
-from .ai_graph import agents, AGENT_ORDER
+from django.shortcuts import redirect, render
+from django.views.decorators.http import require_POST
+
+from .ai_graph import new_state, run_simulation
 
 
 # -------------------------------------------------
@@ -9,25 +13,23 @@ from .ai_graph import agents, AGENT_ORDER
 def startup_page(request):
     if request.method == "POST":
         request.session["startup_data"] = {
-            "idea": request.POST.get("idea"),
-            "problem": request.POST.get("problem"),
+            "idea": request.POST.get("idea", "").strip(),
+            "problem": request.POST.get("problem", "").strip(),
             "targets": request.POST.getlist("targets"),
-            "solution": request.POST.get("solution"),
-            "business_type": request.POST.get("business_type"),
-            "revenue": request.POST.get("revenue"),
-            "uniqueness": request.POST.get("uniqueness"),
+            "solution": request.POST.get("solution", "").strip(),
+            "business_type": request.POST.get("business_type", "").strip(),
+            "revenue": request.POST.get("revenue", "").strip(),
+            "uniqueness": request.POST.get("uniqueness", "").strip(),
         }
-
-        # reset any previous simulation
-        request.session.pop("graph_state", None)
-
+        request.session.pop("simulation_result", None)
+        request.session.modified = True
         return redirect("canvas")
 
     return render(request, "startup.html")
 
 
 # -------------------------------------------------
-# CANVAS PAGE
+# CANVAS PAGE (the boardroom)
 # -------------------------------------------------
 def canvas(request):
     if "startup_data" not in request.session:
@@ -36,98 +38,44 @@ def canvas(request):
 
 
 # -------------------------------------------------
-# RUN ONE AGENT STEP (CORE LOGIC)
+# RUN THE FULL BOARDROOM DEBATE → JSON
 # -------------------------------------------------
-def run_step(request):
-    if request.method != "POST":
-        return JsonResponse({"error": "Invalid request"}, status=400)
-
+@require_POST
+def run_simulation_view(request):
     startup_data = request.session.get("startup_data")
     if not startup_data:
-        return JsonResponse({"error": "No startup data"}, status=400)
+        return JsonResponse({"error": "No startup data in session"}, status=400)
 
-    # -----------------------------
-    # LOAD OR INITIALIZE STATE
-    # -----------------------------
-    state = request.session.get("graph_state")
+    founder_question = (request.POST.get("question") or "").strip()
 
-    if not isinstance(state, dict):
-        state = {}
+    try:
+        steps, final = run_simulation(startup_data, founder_question)
+    except Exception as exc:
+        return JsonResponse(
+            {"error": f"The boardroom crashed: {exc}", "steps": [], "verdict": {}},
+            status=500,
+        )
 
-    # 🔒 FORCE SAFE STATE SHAPE
-    state.setdefault("idea", startup_data["idea"])
-    state.setdefault("current_message", startup_data["problem"])
-    state.setdefault("history", [])
-    state.setdefault("step", 0)
-
-    # -----------------------------
-    # STOP CONDITION
-    # -----------------------------
-    if state["step"] >= len(AGENT_ORDER):
-        return JsonResponse({"done": True})
-
-    # -----------------------------
-    # RUN CURRENT AGENT
-    # -----------------------------
-    agent_name = AGENT_ORDER[state["step"]]
-    agent_fn = agents[agent_name]
-
-    state = agent_fn(state)
-
-    # -----------------------------
-    # MOVE TO NEXT AGENT
-    # -----------------------------
-    state["step"] += 1
-    request.session["graph_state"] = dict(state)
+    result = {
+        "startup": startup_data,
+        "steps": steps,
+        "verdict": final.get("verdict") or {},
+    }
+    if final.get("error"):
+        result["error"] = final["error"]
+    request.session["simulation_result"] = result
     request.session.modified = True
 
-    latest = state["history"][-1]
-
-    return JsonResponse({
-        "agent": latest["agent"],
-        "output": latest["output"],
-        "done": state["step"] >= len(AGENT_ORDER)
-    })
+    return JsonResponse(result)
 
 
 # -------------------------------------------------
-# FINAL SCORE (OPTIONAL – AFTER ALL AGENTS)
+# LAST RESULT (lets the page survive a refresh)
 # -------------------------------------------------
-def finalize_simulation(request):
-    state = request.session.get("graph_state")
-    if not state or "history" not in state:
-        return JsonResponse({"error": "No simulation found"}, status=400)
-
-    agents_data = state["history"]
-
-    positive_words = [
-        "clear", "simple", "easy", "focus", "feasible",
-        "low cost", "trust", "real", "safe", "scalable", "useful"
-    ]
-
-    weights = {
-        "Customer": 1.5,
-        "CEO": 1.2,
-        "Marketing": 1.0,
-        "Finance": 1.0,
-        "Tech": 0.8,
-    }
-
-    total = 0
-    max_total = 0
-
-    for a in agents_data:
-        text = a["output"].lower()
-        weight = weights.get(a["agent"], 1)
-        score = min(sum(2 for w in positive_words if w in text), 20)
-        total += score * weight
-        max_total += 20 * weight
-
-    success = round((total / max_total) * 100) if max_total else 0
-    failure = 100 - success
-
-    return JsonResponse({
-        "success": success,
-        "failure": failure,
-        "agents": agents_data
-    })
+def simulation_result(request):
+    # Always 200: an empty payload simply means "no saved run yet", which is
+    # the normal first-load state. This avoids a noisy 404 in the browser.
+    result = request.session.get("simulation_result")
+    if not result:
+        return JsonResponse({"result": None})
+    return JsonResponse(result)

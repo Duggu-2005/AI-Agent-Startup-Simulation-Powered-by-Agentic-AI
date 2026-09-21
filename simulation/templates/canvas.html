@@ -1,283 +1,1078 @@
 {% extends "nav.html" %}
 {% load static %}
+{% block title %}The Boardroom — VyavasAI{% endblock %}
+
 {% block content %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<title>AI Startup Simulation</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <style>
-:root{
-  --bg:#0b0d1a;
-  --glass:rgba(255,255,255,.08);
-  --border:rgba(255,255,255,.14);
-  --customer:#22d3ee;
-  --ceo:#a855f7;
-  --marketing:#4ade80;
-  --finance:#fb7185;
-  --tech:#60a5fa;
-}
-
-*{box-sizing:border-box;font-family:Inter,system-ui}
-
-body{
-  margin:0;
-  min-height:100vh;
-  background:radial-gradient(1200px 600px at 10% 10%,#1a1140,transparent),
-             radial-gradient(1200px 600px at 90% 90%,#2b0f2b,transparent),
-             var(--bg);
-  color:#e5e7eb;
-  display:flex;
-  flex-direction:column;
-}
-
-header{
-  padding:20px;
-  text-align:center;
-  font-size:20px;
-  letter-spacing:.5px;
-}
-
-#chat{
-  flex:1;
-  padding:20px;
-  max-width:900px;
-  margin:auto;
-  display:flex;
-  flex-direction:column;
-}
-
-.message {
-  display: flex;
-  align-items: flex-end;
-  gap: 12px;
-  margin-bottom: 18px;
-  opacity: 0;
-  transform: translateY(12px);
-  transition: .5s ease;
-}
-
-.message.show {
-  opacity: 1;
-  transform: none;
-}
-
-.message.right {
-  flex-direction: row-reverse;
-}
-
-.avatar {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  border: 2px solid rgba(255,255,255,.25);
-  object-fit: cover;
-  background: #111;
-  transition: box-shadow 0.4s ease, transform 0.4s ease;
-}
-.message.show .avatar {
-  box-shadow:
-    0 0 12px rgba(168,85,247,0.6),
-    0 0 24px rgba(168,85,247,0.45),
-    0 0 48px rgba(168,85,247,0.25);
-  transform: scale(1.05);
-}
-
-/* ---------- Agent-specific glow colors ---------- */
-.customer .avatar {
-  box-shadow:
-    0 0 10px rgba(34,211,238,.6),
-    0 0 30px rgba(34,211,238,.4);
-}
-
-.ceo .avatar {
-  box-shadow:
-    0 0 12px rgba(168,85,247,.7),
-    0 0 36px rgba(168,85,247,.45);
-}
-
-.marketing .avatar {
-  box-shadow:
-    0 0 12px rgba(74,222,128,.6),
-    0 0 32px rgba(74,222,128,.4);
-}
-
-.finance .avatar {
-  box-shadow:
-    0 0 12px rgba(251,113,133,.6),
-    0 0 32px rgba(251,113,133,.4);
-}
-
-.tech .avatar {
-  box-shadow:
-    0 0 12px rgba(96,165,250,.6),
-    0 0 32px rgba(96,165,250,.4);
-}
-
-/* ---------- Optional pulse animation ---------- */
-@keyframes glowPulse {
-  0% { box-shadow: 0 0 10px rgba(168,85,247,.4); }
-  50% { box-shadow: 0 0 28px rgba(168,85,247,.8); }
-  100% { box-shadow: 0 0 10px rgba(168,85,247,.4); }
-}
-
-.message.show .avatar {
-  animation: glowPulse 2s infinite ease-in-out;
-}
-.bubble {
-  max-width: 65%;
-  padding: 14px 18px;
-  border-radius: 18px;
-  border: 1px solid var(--border);
-  background: var(--glass);
-  backdrop-filter: blur(14px);
-  line-height: 1.5;
-  animation: pop .3s ease;
-}
-@keyframes pop {
-  from { transform: scale(.95); }
-  to { transform: scale(1); }
-}
-
-.customer .bubble { border-left: 4px solid var(--customer); }
-.ceo .bubble { border-right: 4px solid var(--ceo); }
-.marketing .bubble { border-left: 4px solid var(--marketing); }
-.finance .bubble { border-right: 4px solid var(--finance); }
-.tech .bubble { border-left: 4px solid var(--tech); }
-
-footer{
-  padding:20px;
-  display:flex;
-  justify-content:center;
-  gap:20px;
-}
-
-button{
-  padding:14px 24px;
-  border:none;
-  border-radius:12px;
-  font-size:15px;
-  font-weight:600;
-  cursor:pointer;
-  background:linear-gradient(135deg,#a855f7,#7c3aed);
-  color:white;
-  box-shadow:0 12px 30px rgba(168,85,247,.4);
-}
-
-button:disabled{
-  opacity:.6;
-  cursor:not-allowed;
-}
-
-#score{
-  text-align:center;
-  margin-top:10px;
-  font-size:18px;
-}
-</style>
-</head>
-
-<body>
-
-<header>🤖 AI Startup Agent Simulation</header>
-
-<div id="chat"></div>
-
-<footer>
-  <button id="startBtn">Start Simulation</button>
-</footer>
-
-
-
-<script>
-const chat = document.getElementById("chat");
-const startBtn = document.getElementById("startBtn");
-const scoreBox = document.getElementById("score");
-const AVATARS = {
-  customer: "/static/core/images/lucid-origin_Futuristic_AI_customer_agent_avatar_humanoid_android_with_human-like_warmth_soft-0.jpg",
-  ceo: "/static/core/images/lucid-origin_Futuristic_AI_CEO_avatar_humanoid_android_leader_wearing_a_sleek_black_tech_suit-0.jpg",
-  marketing: "/static/core/images/lucid-origin_Futuristic_AI_marketing_agent_avatar_energetic_humanoid_robot_stylish_futuristic-0.jpg",
-  finance: "/static/core/images/lucid-origin_Futuristic_AI_finance_agent_avatar_calm_and_analytical_humanoid_android_minimali-0.jpg",
-  tech:"/static/core/images/tech.png"
-};
-
-// CSRF (Django-safe)
-function getCSRF(){
-  return document.cookie.split("; ")
-    .find(r=>r.startsWith("csrftoken="))
-    ?.split("=")[1];
-}
-
-// Add chat bubble
-function addBubble(agent, text) {
-  if (!agent || !text) return;
-
-  const role = agent.toLowerCase();
-  const isRight = role === "ceo" || role === "finance";
-
-  const wrapper = document.createElement("div");
-  wrapper.className = `message ${role} ${isRight ? "right" : ""}`;
-
-  const avatar = document.createElement("img");
-  avatar.className = "avatar";
-  avatar.src = AVATARS[role] || "/static/avatars/default.png";
-  avatar.alt = agent;
-
-  const bubble = document.createElement("div");
-  bubble.className = "bubble";
-  bubble.innerHTML = `<strong>${agent}</strong><br>${text}`;
-
-  wrapper.appendChild(avatar);
-  wrapper.appendChild(bubble);
-
-  chat.appendChild(wrapper);
-
-  requestAnimationFrame(() => {
-    wrapper.classList.add("show");
-  });
-
-  chat.scrollTop = chat.scrollHeight;
-}
-
-// Run one agent step
-async function runStep(){
-  const res = await fetch("/run-simulation/",{
-    method:"POST",
-    headers:{
-      "X-CSRFToken":getCSRF()
-    }
-  });
-
-  const data = await res.json();
-
-  addBubble(data.agent, data.output);
-
-  if(!data.done){
-    setTimeout(runStep, 1600); // dramatic pause 😌
-  }else{
-    finalize();
+  /* ============================================================
+     THE BOARDROOM — dark cinematic stage
+     ============================================================ */
+  .canvas-page {
+    padding: clamp(2rem, 4vw, 3.5rem) clamp(1.25rem, 4vw, 3rem) 4rem;
+    max-width: 1440px;
+    margin: 0 auto;
   }
-}
 
-// Final score
-async function finalize(){
-  const res = await fetch("/canvas/");
-  const data = await res.json();
+  /* ---------- TOP BAR ---------- */
+  .topbar {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 2rem;
+    flex-wrap: wrap;
+    margin-bottom: 2rem;
+  }
+  .topbar .idea h1 {
+    font-size: clamp(1.4rem, 2.6vw, 2.1rem);
+    margin-top: 0.6rem;
+    font-weight: 500;
+  }
+  .topbar .idea p.idea-sub {
+    color: var(--muted);
+    font-size: 0.94rem;
+    margin-top: 0.6rem;
+    max-width: 640px;
+  }
+  .stat-chip {
+    font-family: var(--display);
+    font-size: 0.76rem;
+    font-weight: 500;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--muted);
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 0.55rem 1.1rem;
+    white-space: nowrap;
+  }
+  .stat-chip b { color: var(--gold-2); font-weight: 600; }
 
-  scoreBox.innerHTML = `
-    ✅ Success: <strong>${data.success}%</strong>
-    &nbsp;&nbsp;❌ Risk: <strong>${data.failure}%</strong>
-  `;
-}
+  .alert {
+    display: none;
+    margin-bottom: 1.5rem;
+    padding: 0.9rem 1.2rem;
+    border-radius: 14px;
+    border: 1px solid rgba(212, 87, 79, 0.4);
+    background: rgba(212, 87, 79, 0.1);
+    color: #f0b6b2;
+    font-size: 0.9rem;
+    font-weight: 500;
+  }
+  .alert.show { display: block; }
 
-startBtn.onclick = ()=>{
-  startBtn.disabled = true;
-  startBtn.innerText = "Simulation Running...";
-  runStep();
-};
+  /* ---------- LAYOUT ---------- */
+  .layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 380px;
+    gap: 1.5rem;
+    align-items: start;
+  }
+
+  /* ============================================================
+     STAGE
+     ============================================================ */
+  .stage {
+    position: relative;
+    height: min(780px, 82vh);
+    border: 1px solid var(--line);
+    border-radius: 28px;
+    overflow: hidden;
+    background:
+      radial-gradient(900px 460px at 50% -20%, rgba(217, 169, 78, 0.16), transparent 68%),
+      radial-gradient(600px 400px at 90% 110%, rgba(139, 123, 216, 0.12), transparent 70%),
+      linear-gradient(180deg, #0c0c10, #070709);
+  }
+
+  .stage-grid {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-image:
+      linear-gradient(rgba(255, 255, 255, 0.028) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.028) 1px, transparent 1px);
+    background-size: 60px 60px;
+    -webkit-mask-image: radial-gradient(circle at 50% 62%, #000 30%, transparent 78%);
+    mask-image: radial-gradient(circle at 50% 62%, #000 30%, transparent 78%);
+  }
+
+  .stage-label {
+    position: absolute;
+    top: 1.3rem;
+    left: 1.5rem;
+    z-index: 6;
+    font-family: var(--display);
+    font-size: 0.68rem;
+    font-weight: 500;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--dim);
+  }
+
+  .live-dot {
+    position: absolute;
+    top: 1.1rem;
+    right: 1.3rem;
+    z-index: 6;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.68rem;
+    font-weight: 500;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 0.4rem 0.9rem;
+  }
+  .live-dot i {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--emerald);
+    box-shadow: 0 0 0 0 rgba(70, 177, 132, 0.5);
+    animation: ping 1.9s ease-in-out infinite;
+  }
+  @keyframes ping {
+    0% { box-shadow: 0 0 0 0 rgba(70, 177, 132, 0.5); }
+    70% { box-shadow: 0 0 0 9px rgba(70, 177, 132, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(70, 177, 132, 0); }
+  }
+
+  /* 3D scene */
+  .scene3d {
+    position: absolute;
+    inset: 0;
+    perspective: 1500px;
+    perspective-origin: 50% 42%;
+  }
+  .sceneworld { position: absolute; inset: 0; transform-style: preserve-3d; }
+  .seatring { position: absolute; inset: 0; }
+
+  /* the table */
+  .tbl {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 58%;
+    aspect-ratio: 2.1 / 1;
+    transform: translate(-50%, -50%) rotateX(64deg);
+    background: linear-gradient(135deg, rgba(217, 169, 78, 0.22), rgba(139, 123, 216, 0.1) 55%, rgba(79, 176, 184, 0.08));
+    border: 1px solid rgba(240, 200, 120, 0.32);
+    border-radius: 46%;
+    box-shadow:
+      0 80px 120px -40px rgba(0, 0, 0, 0.9),
+      inset 0 0 90px rgba(255, 255, 255, 0.06);
+  }
+  .tbl .shine {
+    position: absolute;
+    inset: 14% 18%;
+    border-radius: 46%;
+    background: radial-gradient(closest-side, rgba(255, 255, 255, 0.14), transparent 78%);
+  }
+  .tbl .spin {
+    position: absolute;
+    inset: -8%;
+    border-radius: 50%;
+    border: 1px dashed rgba(240, 200, 120, 0.18);
+    animation: spin 40s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* seats */
+  .seat {
+    position: absolute;
+    left: 50%;
+    top: 54%;
+    z-index: 4;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    will-change: transform;
+    cursor: default;
+  }
+  .seat .avatar {
+    width: 58px;
+    height: 58px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 2px solid rgba(255, 255, 255, 0.12);
+    background: var(--surface-3);
+    display: grid;
+    place-items: center;
+    box-shadow: 0 16px 34px -16px rgba(0, 0, 0, 0.9);
+    filter: grayscale(0.55) brightness(0.78);
+    transition: filter 0.5s, border-color 0.5s, box-shadow 0.5s, transform 0.5s;
+  }
+  .seat .avatar img, .seat .avatar .glyph { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .seat .avatar .glyph { display: grid; place-items: center; font-size: 1.3rem; color: var(--gold-2); }
+  .seat .name {
+    font-size: 0.6rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--dim);
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--line);
+    padding: 0.22rem 0.6rem;
+    border-radius: 999px;
+    transition: color 0.4s, border-color 0.4s, background 0.4s;
+  }
+
+  .seat.on .avatar {
+    filter: none;
+    border-color: color-mix(in srgb, var(--accent2, var(--gold)) 70%, #fff);
+    box-shadow:
+      0 0 0 4px color-mix(in srgb, var(--accent2, var(--gold)) 22%, transparent),
+      0 0 40px -4px color-mix(in srgb, var(--accent2, var(--gold)) 70%, transparent);
+    transform: translateZ(50px) scale(1.04);
+  }
+  .seat.on .name {
+    color: #111;
+    background: var(--accent2, var(--gold));
+    border-color: transparent;
+  }
+
+  .seat .ring {
+    position: absolute;
+    top: 29px; left: 50%;
+    width: 60px; height: 60px;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    border: 1px solid color-mix(in srgb, var(--accent2, var(--gold)) 60%, transparent);
+    opacity: 0;
+    pointer-events: none;
+  }
+  .seat.on .ring { animation: ringPulse 1.7s ease-out infinite; }
+  @keyframes ringPulse {
+    0% { opacity: 0.9; transform: translate(-50%, -50%) scale(1); }
+    100% { opacity: 0; transform: translate(-50%, -50%) scale(2); }
+  }
+
+  /* subtitle dock */
+  .subs {
+    position: absolute;
+    left: 50%;
+    bottom: 5%;
+    transform: translateX(-50%);
+    width: min(660px, 92%);
+    z-index: 10;
+    background: rgba(16, 16, 20, 0.82);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    border: 1px solid var(--line-2);
+    border-radius: 20px;
+    padding: 1.1rem 1.4rem;
+    box-shadow: 0 30px 70px -30px rgba(0, 0, 0, 0.95), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  }
+  .subs .who {
+    display: flex; align-items: center; gap: 0.55rem;
+    font-family: var(--display);
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.5rem;
+  }
+  .subs .who i { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+  .subs .body {
+    font-family: var(--display);
+    font-size: clamp(0.98rem, 1.4vw, 1.2rem);
+    line-height: 1.5;
+    min-height: 3em;                 /* reserve two lines so the dock never jumps */
+    font-weight: 400;
+    color: var(--text);
+  }
+  .subs .body .txt { white-space: pre-wrap; }
+  /* caret as a pseudo-element so it never reflows / rewraps the text */
+  .subs .body.typing::after {
+    content: "";
+    display: inline-block;
+    width: 2px;
+    height: 1.05em;
+    margin-left: 3px;
+    vertical-align: -0.15em;
+    background: var(--gold-2);
+    animation: caret 0.7s steps(1) infinite;
+  }
+  @keyframes caret { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+  .dots { display: inline-flex; gap: 0.35rem; align-items: center; }
+  .dots i {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--gold-2);
+    animation: dotJump 1.1s ease-in-out infinite;
+  }
+  .dots i:nth-child(2) { animation-delay: 0.15s; }
+  .dots i:nth-child(3) { animation-delay: 0.3s; }
+  @keyframes dotJump {
+    0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+    30% { transform: translateY(-6px); opacity: 1; }
+  }
+
+  .stage-foot {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 3px;
+    background: rgba(255, 255, 255, 0.06);
+    z-index: 11;
+  }
+  #stageBar {
+    height: 100%; width: 0;
+    background: linear-gradient(90deg, var(--amber), var(--gold-2));
+    box-shadow: 0 0 12px rgba(217, 169, 78, 0.7);
+    transition: width 0.3s ease;
+  }
+
+  /* ============================================================
+     TRANSCRIPT
+     ============================================================ */
+  .side {
+    border: 1px solid var(--line);
+    border-radius: 24px;
+    background: linear-gradient(180deg, var(--surface-2), var(--surface));
+    box-shadow: var(--shadow-soft);
+    display: flex;
+    flex-direction: column;
+    height: min(640px, 72vh);
+    overflow: hidden;
+  }
+  .side-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.1rem 1.3rem;
+    border-bottom: 1px solid var(--line);
+  }
+  .side-head h3 {
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--dim);
+  }
+  .side-head .count {
+    font-size: 0.68rem;
+    font-weight: 500;
+    color: var(--muted);
+    border: 1px solid var(--line);
+    padding: 0.15rem 0.55rem;
+    border-radius: 999px;
+  }
+
+  #transcript {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1rem 1.1rem 1.3rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+  }
+  #transcript::-webkit-scrollbar { width: 5px; }
+  #transcript::-webkit-scrollbar-thumb { background: var(--line-2); border-radius: 99px; }
+
+  .msg {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 0.8rem 0.95rem;
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+    animation: rise 0.55s var(--ease) forwards;
+  }
+  @keyframes rise { to { opacity: 1; transform: none; } }
+
+  .msg .row { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.35rem; }
+  .msg .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--c, var(--gold)); }
+  .msg .name { font-family: var(--display); font-size: 0.72rem; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--c, var(--gold-2)); }
+  .msg .round { margin-left: auto; font-size: 0.6rem; font-weight: 500; color: var(--dim); border: 1px solid var(--line); padding: 0.1rem 0.4rem; border-radius: 999px; }
+  .msg .text { font-size: 0.88rem; color: var(--muted); line-height: 1.55; }
+
+  .msg.chair { background: rgba(217, 169, 78, 0.07); border-color: rgba(217, 169, 78, 0.22); }
+  .msg.chair .text { color: #cbb98c; }
+  .msg.stage { background: rgba(139, 123, 216, 0.08); border-color: rgba(139, 123, 216, 0.22); }
+
+  /* ============================================================
+     CONTROLS
+     ============================================================ */
+  .controls {
+    margin-top: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+  .interject { display: flex; gap: 0.6rem; flex: 1; min-width: 260px; }
+  .interject input {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--line-2);
+    border-radius: 999px;
+    color: var(--text);
+    padding: 0.82rem 1.25rem;
+    font-family: var(--body);
+    font-size: 0.94rem;
+    outline: none;
+    transition: border-color 0.25s, box-shadow 0.25s;
+  }
+  .interject input:focus { border-color: var(--gold); box-shadow: 0 0 0 4px rgba(217, 169, 78, 0.13); }
+  .interject input::placeholder { color: var(--dim); }
+  .control-btns { display: flex; gap: 0.7rem; flex-wrap: wrap; }
+
+  .statusline {
+    width: 100%;
+    font-size: 0.85rem;
+    color: var(--muted);
+  }
+  .statusline b { color: var(--gold-2); font-weight: 600; }
+
+  /* ============================================================
+     VERDICT
+     ============================================================ */
+  .confetti-layer {
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 2100;
+    display: none;
+  }
+  .confetti-layer.show { display: block; }
+  .confetti-layer i { position: absolute; top: -24px; animation: confFall linear forwards; }
+  @keyframes confFall {
+    to { transform: translateY(115vh) rotate(720deg); opacity: 0.1; }
+  }
+
+  .overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    display: grid;
+    place-items: center;
+    background: rgba(4, 4, 6, 0.72);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.45s, visibility 0.45s;
+    padding: 1.5rem;
+  }
+  .overlay.show { opacity: 1; visibility: visible; }
+
+  .verdict {
+    width: min(880px, 96vw);
+    max-height: 92vh;
+    overflow-y: auto;
+    border: 1px solid var(--line-2);
+    border-radius: 28px;
+    background: linear-gradient(180deg, var(--surface-2), #0c0c10);
+    padding: clamp(1.8rem, 4vw, 2.8rem);
+    box-shadow: var(--shadow-big);
+    transform: translateY(26px) scale(0.98);
+    transition: transform 0.55s var(--ease);
+    position: relative;
+  }
+  .overlay.show .verdict { transform: none; }
+  .verdict::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--amber), var(--gold-2), #fff5d8);
+    border-radius: 28px 28px 0 0;
+  }
+
+  .verdict-head { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem; }
+  .verdict-head h2 { font-size: clamp(1.4rem, 3vw, 2rem); margin-top: 0.6rem; font-weight: 500; }
+
+  .trophy-mini {
+    width: 80px; height: 80px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 40% 35%, #fff3d4, #e6b455);
+    box-shadow: 0 24px 60px -20px rgba(217, 169, 78, 0.8);
+    display: grid; place-items: center;
+    animation: floaty 5s ease-in-out infinite;
+  }
+  .trophy-mini svg { width: 42px; height: 42px; }
+  @keyframes floaty { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
+
+  .verdict-grid { display: grid; grid-template-columns: auto 1fr; gap: 2rem 2.6rem; align-items: center; }
+  @media (max-width: 720px) { .verdict-grid { grid-template-columns: 1fr; } }
+
+  .ring-wrap { position: relative; width: 184px; height: 184px; margin: 0 auto; }
+  .ring-wrap svg { width: 184px; height: 184px; transform: rotate(-90deg); }
+  .ring-wrap .track { fill: none; stroke: rgba(255, 255, 255, 0.08); stroke-width: 10; }
+  .ring-wrap .val { fill: none; stroke: url(#ringGrad); stroke-width: 10; stroke-linecap: round; stroke-dasharray: 439.8; stroke-dashoffset: 439.8; filter: drop-shadow(0 0 10px rgba(217, 169, 78, 0.6)); }
+  .ring-center { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; }
+  .ring-center b { font-family: var(--display); font-size: 2.7rem; font-weight: 500; letter-spacing: -0.04em; }
+  .ring-center span { font-size: 0.62rem; font-weight: 500; letter-spacing: 0.26em; color: var(--dim); text-transform: uppercase; margin-top: 0.2rem; }
+
+  .scores { display: grid; gap: 1.05rem; }
+  .score-row { display: grid; grid-template-columns: 110px 1fr 46px; align-items: center; gap: 0.9rem; font-size: 0.88rem; }
+  .score-row .label { color: var(--muted); font-weight: 500; }
+  .score-row .bar { height: 8px; background: rgba(255, 255, 255, 0.08); border-radius: 99px; overflow: hidden; }
+  .score-row .bar i { display: block; height: 100%; width: 0; border-radius: 99px; background: var(--c, var(--gold)); transition: width 1.1s var(--ease); }
+  .score-row .num { font-family: var(--display); font-weight: 500; text-align: right; color: var(--text); }
+
+  .verdict-summary {
+    margin-top: 2rem;
+    padding: 1.4rem 1.6rem;
+    border: 1px solid rgba(217, 169, 78, 0.24);
+    border-radius: 18px;
+    background: rgba(217, 169, 78, 0.06);
+  }
+  .verdict-summary h4 { font-size: 0.7rem; font-weight: 600; letter-spacing: 0.24em; text-transform: uppercase; color: var(--gold-2); margin-bottom: 0.6rem; }
+  .verdict-summary p { color: var(--text); font-size: 1.08rem; line-height: 1.6; }
+
+  .recs { margin-top: 1.6rem; display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+  @media (max-width: 720px) { .recs { grid-template-columns: 1fr; } }
+  .rec {
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 1.1rem 1.15rem;
+    background: rgba(255, 255, 255, 0.02);
+  }
+  .rec b { display: block; color: var(--accent, var(--gold-2)); font-family: var(--display); margin-bottom: 0.45rem; font-size: 0.72rem; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; }
+  .rec span { font-size: 0.88rem; color: var(--muted); line-height: 1.55; }
+  .rec.r1 { --accent: var(--gold-2); }
+  .rec.r2 { --accent: var(--emerald); }
+  .rec.r3 { --accent: var(--plum); }
+
+  .verdict-foot { margin-top: 2rem; display: flex; gap: 0.8rem; justify-content: flex-end; flex-wrap: wrap; }
+
+  .hidden { display: none !important; }
+
+  @media (max-width: 1100px) {
+    .layout { grid-template-columns: 1fr; }
+    .side { height: 340px; }
+    .stage { height: 60vh; }
+  }
+</style>
+
+<main class="canvas-page">
+  <div class="topbar">
+    <div class="idea">
+      <p class="kicker">Live boardroom</p>
+      <h1 id="ideaTitle">—</h1>
+      <p class="idea-sub" id="ideaBlurb">—</p>
+    </div>
+    <span class="stat-chip" id="roundStat">Round —</span>
+  </div>
+
+  <div class="alert" id="engineAlert"></div>
+
+  <div class="layout">
+    <!-- STAGE -->
+    <section class="stage" id="stage">
+      <div class="stage-grid" aria-hidden="true"></div>
+      <div class="stage-label">Boardroom · Live</div>
+      <div class="live-dot"><i></i> Room open</div>
+
+      <div class="scene3d">
+        <div class="sceneworld" id="sceneworld">
+          <div class="tbl"><div class="shine"></div><div class="spin"></div></div>
+        </div>
+        <div class="seatring" id="seatring"></div>
+      </div>
+
+      <div class="subs" id="subs">
+        <div class="who"><i></i><span id="subsWho">Supervisor</span></div>
+        <div class="body" id="subsBody"></div>
+      </div>
+
+      <div class="stage-foot"><div id="stageBar"></div></div>
+    </section>
+
+    <!-- TRANSCRIPT -->
+    <aside class="side">
+      <div class="side-head">
+        <h3>Transcript</h3>
+        <span class="count" id="stepCount">0 msgs</span>
+      </div>
+      <div id="transcript" data-lenis-prevent></div>
+    </aside>
+  </div>
+
+  <!-- CONTROLS -->
+  <div class="controls">
+    <div class="interject">
+      <input id="questionInput" type="text" placeholder="Ask the team a question mid-debate… (optional)" />
+      <button class="btn btn-ghost" id="askBtn" disabled>Ask</button>
+    </div>
+    <div class="control-btns">
+      <button class="btn btn-primary magnetic" id="startBtn">Open the Boardroom</button>
+      <a href="{% url 'startup' %}" class="btn btn-ghost hidden" id="editBtn">Edit idea</a>
+      <button class="btn btn-gold hidden" id="verdictBtn">Show verdict</button>
+    </div>
+    <div class="statusline" id="status">The room is empty. Open the boardroom to start the debate.</div>
+  </div>
+
+  <!-- VERDICT OVERLAY -->
+  <div class="confetti-layer" id="confettiLayer"></div>
+  <div class="overlay" id="overlay">
+    <div class="verdict" data-lenis-prevent>
+      <div class="verdict-head">
+        <div>
+          <p class="kicker">Verdict delivered</p>
+          <h2>The judge has spoken.</h2>
+        </div>
+        <div class="trophy-mini" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none">
+            <path d="M6.8 2.8h10.4V6c0 2.8-2 4.9-5.2 4.9S6.8 8.8 6.8 6V2.8z" fill="#7a5210" />
+            <path d="M6.8 3.6H3.9v1.5c0 2 1.3 3.6 3.3 4M17.2 3.6h2.9v1.5c0 2-1.3 3.6-3.3 4" stroke="#b06a2a" stroke-width="1.5" stroke-linecap="round" />
+            <path d="M12 11.5v2.8" stroke="#b06a2a" stroke-width="1.6" stroke-linecap="round" />
+            <path d="M9 20h6M9.7 14.3h4.6L15.6 20H8.4l1.3-5.7z" fill="#c98a2e" />
+          </svg>
+        </div>
+      </div>
+      <div class="verdict-grid">
+        <div class="ring-wrap">
+          <svg viewBox="0 0 200 200">
+            <defs>
+              <linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#f0c878" />
+                <stop offset="100%" stop-color="#c98a2e" />
+              </linearGradient>
+            </defs>
+            <circle class="track" cx="100" cy="100" r="70" />
+            <circle class="val" id="ringVal" cx="100" cy="100" r="70" />
+          </svg>
+          <div class="ring-center">
+            <b id="overallNum">0</b>
+            <span>overall score</span>
+          </div>
+        </div>
+        <div class="scores" id="scoreRows"></div>
+      </div>
+      <div class="verdict-summary">
+        <h4>Honest verdict</h4>
+        <p id="summaryText">—</p>
+      </div>
+      <div class="recs" id="recs"></div>
+      <div class="verdict-foot">
+        <a href="{% url 'startup' %}" class="btn btn-ghost">Try a new idea</a>
+        <button class="btn btn-gold" id="closeVerdict">Nice, got it!</button>
+      </div>
+    </div>
+  </div>
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  "use strict";
+  const $ = (s) => document.querySelector(s);
+
+  const IMGS = {
+    Supervisor: "{% static 'core/images/lucid-origin_Futuristic_AI_CEO_avatar_humanoid_android_leader_wearing_a_sleek_black_tech_suit-0.jpg' %}",
+    Customer: "{% static 'core/images/lucid-origin_Futuristic_AI_customer_agent_avatar_humanoid_android_with_human-like_warmth_soft-0.jpg' %}",
+    Marketing: "{% static 'core/images/lucid-origin_Futuristic_AI_marketing_agent_avatar_energetic_humanoid_robot_stylish_futuristic-0.jpg' %}",
+    Finance: "{% static 'core/images/lucid-origin_Futuristic_AI_finance_agent_avatar_calm_and_analytical_humanoid_android_minimali-0.jpg' %}",
+    Tech: "{% static 'core/images/tech.png' %}",
+  };
+
+  const COLORS = {
+    Supervisor: "#8b7bd8", Customer: "#4fb0b8", CEO: "#d9a94e",
+    Marketing: "#46b184", Finance: "#d4574f", Tech: "#8b7bd8",
+    Chair: "#f0c878", Judge: "#f0c878",
+  };
+
+  const SEATS = ["Supervisor", "Customer", "CEO", "Marketing", "Finance", "Tech", "Chair"];
+
+  const seatEls = {};
+  const seatring = $("#seatring");
+
+  function buildSeats() {
+    seatring.innerHTML = "";
+    SEATS.forEach((s) => {
+      const el = document.createElement("div");
+      el.className = "seat";
+      el.dataset.seat = s;
+      el.style.setProperty("--accent2", COLORS[s]);
+      const avatar = document.createElement("div");
+      avatar.className = "avatar";
+      if (IMGS[s]) {
+        const img = document.createElement("img");
+        img.src = IMGS[s];
+        img.alt = s;
+        avatar.appendChild(img);
+      } else {
+        const g = document.createElement("span");
+        g.className = "glyph";
+        g.textContent = s === "Chair" ? "◆" : "⚖";
+        avatar.appendChild(g);
+      }
+      const ring = document.createElement("div");
+      ring.className = "ring";
+      const name = document.createElement("span");
+      name.className = "name";
+      name.textContent = s;
+      el.appendChild(avatar);
+      el.appendChild(ring);
+      el.appendChild(name);
+      seatring.appendChild(el);
+      seatEls[s] = el;
+    });
+    layoutSeats();
+    setSeatTilt();
+    animateSeatIn();
+  }
+
+  function layoutSeats() {
+    const w = seatring.clientWidth, h = seatring.clientHeight;
+    const cx = w / 2;
+    const cy = h * 0.43;                       // sit the ring on the table, above the subtitle dock
+    const rx = Math.max(70, w / 2 - 60);
+    const ry = Math.max(46, h * 0.27);
+    SEATS.forEach((s, i) => {
+      const a = (i / SEATS.length) * Math.PI * 2 - Math.PI / 2;
+      const x = cx + Math.cos(a) * rx;
+      const y = cy + Math.sin(a) * ry;
+      const tilt = -Math.sin(a) * 14;
+      const el = seatEls[s];
+      el.style.left = x + "px";
+      el.style.top = y + "px";
+      el.style.setProperty("--tilt", tilt + "deg");
+    });
+  }
+
+  function setSeatTilt() {
+    Object.values(seatEls).forEach((el) => {
+      const base = el.classList.contains("on") ? "scale(1.16)" : "scale(1)";
+      el.style.transform = "translate(-50%,-50%) rotate(var(--tilt)) " + base;
+    });
+  }
+
+  function animateSeatIn() {
+    if (!window.gsap) return;
+    gsap.from(".seat", {
+      y: 120, opacity: 0, scale: 0.6,
+      duration: 1.1, ease: "back.out(1.4)", stagger: 0.08, delay: 0.2
+    });
+    gsap.from(".tbl", {
+      rotateX: 95, scale: 0.7, opacity: 0,
+      duration: 1.4, ease: "power3.out", delay: 0.15
+    });
+  }
+
+  window.addEventListener("resize", () => { layoutSeats(); setSeatTilt(); });
+
+  /* ---------- state ---------- */
+  let running = false;
+  let result = null;
+  let playedCount = 0;
+  let queue = [];
+
+  const subsWho = $("#subsWho");
+  const subsBody = $("#subsBody");
+
+  function charSpeed(speaker) {
+    if (speaker === "Judge") return 26;
+    if (speaker === "Chair") return 34;
+    if (speaker === "Supervisor") return 30;
+    return 42;
+  }
+
+  function pauseAfter(speaker) {
+    if (speaker === "Judge") return 800;
+    if (speaker === "Chair" || speaker === "Supervisor") return 1500;
+    return 1900;
+  }
+
+  function setSeat(role, on) {
+    Object.values(seatEls).forEach((el) => {
+      el.classList.toggle("on", on && el.dataset.seat === role);
+    });
+    setSeatTilt();
+    if (on && role && COLORS[role]) subsWho.style.color = COLORS[role];
+  }
+
+  function setStatus(text) { $("#status").innerHTML = text; }
+
+  function setAlert(msg) {
+    const el = $("#engineAlert");
+    if (msg) { el.textContent = msg; el.classList.add("show"); }
+    else { el.textContent = ""; el.classList.remove("show"); }
+  }
+
+  function setRoundStat(round) {
+    $("#roundStat").innerHTML = "Round <b>" + (round ? String(round).padStart(2, "0") : "—") + "</b>";
+  }
+
+  function updateCount() { $("#stepCount").textContent = playedCount + " msgs"; }
+
+  function logMessage(m) {
+    const box = $("#transcript");
+    const msg = document.createElement("div");
+    msg.className = "msg " + (m.kind === "chair" ? "chair" : m.kind === "stage" ? "stage" : "");
+    msg.style.setProperty("--c", COLORS[m.speaker] || "#d9a94e");
+
+    const row = document.createElement("div");
+    row.className = "row";
+    const dot = document.createElement("span");
+    dot.className = "dot";
+    const name = document.createElement("span");
+    name.className = "name";
+    name.textContent = m.speaker;
+    row.appendChild(dot);
+    row.appendChild(name);
+    if (m.round > 0) {
+      const r = document.createElement("span");
+      r.className = "round";
+      r.textContent = "R" + m.round;
+      row.appendChild(r);
+    }
+    const text = document.createElement("div");
+    text.className = "text";
+    text.textContent = m.text;
+    msg.appendChild(row);
+    msg.appendChild(text);
+    box.appendChild(msg);
+    box.scrollTop = box.scrollHeight;
+  }
+
+  function showThinking(who) {
+    subsWho.textContent = who || "";
+    subsWho.style.color = COLORS[who] || "#d9a94e";
+    subsBody.classList.add("typing", "thinking");
+    subsBody.innerHTML = '<span class="dots"><i></i><i></i><i></i></span>';
+  }
+
+  function typeText(el, who, text, speed) {
+    return new Promise((resolve) => {
+      el.classList.remove("thinking");
+      el.innerHTML = '<span class="txt"></span>';
+      const txt = el.querySelector(".txt");
+      el.classList.add("typing");
+      subsWho.textContent = who || "";
+      let i = 0;
+      const step = () => {
+        if (i < text.length) {
+          txt.textContent += text[i];
+          i++;
+          setTimeout(step, speed);
+        } else {
+          el.classList.remove("typing");
+          resolve();
+        }
+      };
+      step();
+    });
+  }
+
+  async function playStep(m) {
+    setSeat(m.speaker === "Judge" ? null : m.speaker, true);
+    setRoundStat(m.round);
+    showThinking(m.speaker);
+    await new Promise((r) => setTimeout(r, 900));
+    await typeText(subsBody, m.speaker, m.text, charSpeed(m.speaker));
+    logMessage(m);
+    playedCount++;
+    updateCount();
+    await new Promise((r) => setTimeout(r, pauseAfter(m.speaker)));
+    setSeat(null, false);
+  }
+
+  async function playQueue() {
+    const total = result ? result.steps.length : queue.length;
+    while (queue.length) {
+      const m = queue.shift();
+      if (total) $("#stageBar").style.width = Math.min(100, (playedCount / total) * 100) + "%";
+      await playStep(m);
+    }
+    if (result && result.verdict && result.verdict.overall !== undefined) finish();
+  }
+
+  function renderStartup() {
+    if (!result || !result.startup) return;
+    $("#ideaTitle").textContent = result.startup.idea || "Untitled idea";
+    const users = Array.isArray(result.startup.targets) ? result.startup.targets.join(", ") : (result.startup.targets || "");
+    $("#ideaBlurb").textContent =
+      (result.startup.business_type || "") + (users ? " · for " + users : "") +
+      (result.startup.revenue ? " · " + result.startup.revenue : "");
+  }
+
+  function resetRoom() {
+    $("#transcript").innerHTML = "";
+    $("#stageBar").style.width = "0%";
+    playedCount = 0;
+    updateCount();
+  }
+
+  async function runSim(question) {
+    running = true;
+    setAlert(null);
+    $("#startBtn").disabled = true;
+    $("#askBtn").disabled = true;
+    setStatus(question
+      ? "The founder just asked a question… the room reacts."
+      : "The doors close. The debate begins.");
+
+    const csrf = document.cookie.split("; ").find((c) => c.startsWith("csrftoken="))?.split("=")[1];
+    try {
+      const res = await fetch("{% url 'run-simulation' %}", {
+        method: "POST",
+        headers: { "X-CSRFToken": csrf },
+        body: new URLSearchParams(question ? { question } : {}),
+      });
+      const data = await res.json();
+      if (data.error) {
+        setAlert(data.error);
+        setStatus("The room hit a problem: " + data.error);
+      }
+      if (!question) {
+        result = data;
+        renderStartup();
+        resetRoom();
+        queue = (data.steps || []).slice();
+      } else {
+        if (!result) { result = { startup: data.startup, steps: [], verdict: {} }; renderStartup(); resetRoom(); }
+        result.steps = result.steps.concat(data.steps || []);
+        result.verdict = data.verdict || result.verdict;
+        queue = (data.steps || []).slice();
+      }
+      if (!data.error) setStatus("The room is debating…");
+      await playQueue();
+    } catch (e) {
+      setStatus("Network error: " + e.message);
+    } finally {
+      running = false;
+      $("#startBtn").disabled = false;
+      $("#askBtn").disabled = false;
+    }
+  }
+
+  function finish() {
+    setRoundStat("");
+    setStatus("The debate is over. The judge has delivered the verdict.");
+    $("#startBtn").innerText = "Re-run the debate";
+    $("#startBtn").disabled = false;
+    $("#askBtn").disabled = false;
+    $("#editBtn").classList.remove("hidden");
+    $("#verdictBtn").classList.remove("hidden");
+    buildVerdict(result.verdict);
+  }
+
+  /* ---------- confetti ---------- */
+  function confetti() {
+    const layer = $("#confettiLayer");
+    if (!layer) return;
+    layer.innerHTML = "";
+    layer.classList.add("show");
+    const colors = ["#d9a94e", "#f0c878", "#46b184", "#8b7bd8", "#4fb0b8", "#fff3d4"];
+    for (let i = 0; i < 70; i++) {
+      const p = document.createElement("i");
+      p.style.left = Math.random() * 100 + "vw";
+      p.style.background = colors[Math.floor(Math.random() * colors.length)];
+      p.style.animationDelay = Math.random() * 0.8 + "s";
+      p.style.animationDuration = 3 + Math.random() * 2.6 + "s";
+      p.style.width = (6 + Math.random() * 7) + "px";
+      p.style.height = (6 + Math.random() * 7) + "px";
+      if (Math.random() > 0.5) p.style.borderRadius = "50%";
+      layer.appendChild(p);
+    }
+    setTimeout(() => layer.classList.remove("show"), 6400);
+  }
+
+  /* ---------- verdict rendering ---------- */
+  function buildVerdict(v) {
+    v = v || {};
+    confetti();
+
+    const scores = v.scores || {};
+    const labels = { market: "Market", business: "Business", revenue: "Revenue", tech: "Tech", uniqueness: "Uniqueness" };
+    const cols = { market: "#4fb0b8", business: "#d9a94e", revenue: "#d4574f", tech: "#8b7bd8", uniqueness: "#46b184" };
+    const rows = $("#scoreRows");
+    rows.innerHTML = "";
+    Object.keys(labels).forEach((k) => {
+      const val = Number(scores[k]) || 0;
+      const row = document.createElement("div");
+      row.className = "score-row";
+      row.innerHTML =
+        '<span class="label">' + labels[k] + '</span>' +
+        '<div class="bar"><i style="--c:' + cols[k] + '"></i></div>' +
+        '<span class="num">' + val + "/10</span>";
+      rows.appendChild(row);
+      setTimeout(() => { row.querySelector("i").style.width = val * 10 + "%"; }, 350);
+    });
+
+    $("#summaryText").textContent = v.summary || "No summary.";
+
+    const recs = $("#recs");
+    recs.innerHTML = "";
+    (v.recommendations || []).slice(0, 3).forEach((r, i) => {
+      const el = document.createElement("div");
+      el.className = "rec r" + (i + 1);
+      el.innerHTML = "<b>Step " + (i + 1) + "</b><span>" + r + "</span>";
+      recs.appendChild(el);
+    });
+    if (!recs.children.length) {
+      recs.innerHTML = '<div class="rec r1"><b>Step 1</b><span>Try again — the judge needs a little more to go on.</span></div>';
+    }
+
+    $("#overlay").classList.add("show");
+
+    const overall = Number(v.overall) || 0;
+    $("#overallNum").textContent = "0";
+    const ring = $("#ringVal");
+    const C = 439.8;
+    ring.style.strokeDashoffset = C + "px";
+    if (window.gsap) {
+      gsap.to({ v: 0 }, {
+        v: overall, duration: 1.6, ease: "power2.out",
+        onUpdate: function () { $("#overallNum").textContent = Math.round(this.targets()[0].v); },
+      });
+      gsap.to(ring, { strokeDashoffset: C * (1 - overall / 100), duration: 1.6, ease: "power2.out" });
+    } else {
+      $("#overallNum").textContent = overall;
+      ring.style.strokeDashoffset = C * (1 - overall / 100);
+    }
+  }
+
+  /* ---------- boot ---------- */
+  buildSeats();
+
+  async function restore() {
+    try {
+      const res = await fetch("{% url 'simulation-result' %}");
+      if (!res.ok) return;
+      const data = await res.json();
+      if (!data || !data.steps) return;
+      result = data;
+      renderStartup();
+      $("#verdictBtn").classList.remove("hidden");
+      $("#editBtn").classList.remove("hidden");
+      $("#startBtn").innerText = "Re-run the debate";
+      $("#startBtn").disabled = false;
+      setStatus("A previous debate is saved in this room.");
+    } catch (e) { /* no saved run yet */ }
+  }
+  restore();
+
+  $("#startBtn").addEventListener("click", () => {
+    if (running) return;
+    queue = [];
+    runSim(null);
+  });
+
+  $("#askBtn").addEventListener("click", () => {
+    const q = $("#questionInput").value.trim();
+    if (!q || running) return;
+    $("#questionInput").value = "";
+    runSim(q);
+  });
+  $("#questionInput").addEventListener("keydown", (e) => { if (e.key === "Enter") $("#askBtn").click(); });
+
+  $("#verdictBtn").addEventListener("click", () => {
+    if (result && result.verdict) buildVerdict(result.verdict);
+  });
+  $("#closeVerdict").addEventListener("click", () => $("#overlay").classList.remove("show"));
+  $("#overlay").addEventListener("click", (e) => {
+    if (e.target === $("#overlay")) $("#overlay").classList.remove("show");
+  });
+})();
 </script>
-{% endblock content %}
-</body>
-</html>
+{% endblock %}

@@ -1,19 +1,17 @@
 from django.shortcuts import render
 
+
 def index(request):
-    return render(request, 'index.html')
+    return render(request, "index.html")
+
 
 def how_it_works(request):
-    return render(request, 'how-it-works.html')
+    return render(request, "how-it-works.html")
+
 
 def agents(request):
-    return render(request, 'agents.html')
+    return render(request, "agents.html")
+
 
 def about(request):
-    return render(request, 'about.html')
-
-def simulation(request):
-    return render(request,'simulation.html')
-
-def demo(request):
-    return render(request,'demo.html')
+    return render(request, "about.html")
