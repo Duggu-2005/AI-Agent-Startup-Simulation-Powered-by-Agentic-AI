@@ -283,9 +283,12 @@
   let current = 0;
 
   document.querySelectorAll(".chip").forEach((chip) => {
-    chip.addEventListener("click", () => {
+    chip.addEventListener("click", (e) => {
       const input = chip.querySelector("input");
-      chip.classList.toggle("got", input.checked);
+      setTimeout(() => chip.classList.toggle("got", input.checked), 0);
+    });
+    chip.querySelector("input").addEventListener("change", (e) => {
+      chip.classList.toggle("got", e.target.checked);
     });
   });
 
